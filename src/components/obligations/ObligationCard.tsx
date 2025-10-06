@@ -1,0 +1,76 @@
+import { CalendarIcon, Building2, Repeat, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Obligation } from "@/types";
+import { statusConfig, recurrenceLabels } from "@/lib/statusConfig";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface ObligationCardProps {
+  obligation: Obligation;
+}
+
+export function ObligationCard({ obligation }: ObligationCardProps) {
+  const config = statusConfig[obligation.status];
+
+  return (
+    <Card className="hover:shadow-md transition-all">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold leading-tight">{obligation.title}</h3>
+          <Badge variant={config.badgeVariant}>{config.label}</Badge>
+        </div>
+        {obligation.description && (
+          <p className="text-sm text-muted-foreground mt-1">{obligation.description}</p>
+        )}
+      </CardHeader>
+      
+      <CardContent className="space-y-2 pb-3">
+        {obligation.clientName && (
+          <div className="flex items-center gap-2 text-sm">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span>{obligation.clientName}</span>
+          </div>
+        )}
+        
+        <div className="flex items-center gap-2 text-sm">
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+          <span>
+            Vencimento: {format(obligation.dueDate, "dd/MM/yyyy", { locale: ptBR })}
+          </span>
+        </div>
+
+        {obligation.recurrence !== "none" && (
+          <div className="flex items-center gap-2 text-sm">
+            <Repeat className="h-4 w-4 text-muted-foreground" />
+            <span>{recurrenceLabels[obligation.recurrence]}</span>
+          </div>
+        )}
+
+        {obligation.completedDate && (
+          <div className="flex items-center gap-2 text-sm text-success">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>
+              Concluída em {format(obligation.completedDate, "dd/MM/yyyy", { locale: ptBR })}
+            </span>
+          </div>
+        )}
+
+        {obligation.taxType && (
+          <div className="mt-2">
+            <Badge variant="outline" className="text-xs">
+              {obligation.taxType}
+            </Badge>
+          </div>
+        )}
+      </CardContent>
+
+      <CardFooter className="pt-3 border-t">
+        <Button variant="outline" size="sm" className="w-full">
+          Ver Detalhes
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
