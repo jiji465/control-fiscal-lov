@@ -1,16 +1,22 @@
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { mockClients } from "@/lib/mockData";
+import { Button } from "@/components/ui/button";
+import { ClientForm } from "@/components/forms/ClientForm";
+import { useClients } from "@/hooks/useClients";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { clients, isLoading } = useClients();
 
-  const filteredClients = mockClients.filter(
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
+
+  const filteredClients = clients.filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.document.includes(searchTerm)
@@ -25,10 +31,7 @@ export default function Clients() {
             Gerencie seus clientes e suas informações
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Cliente
-        </Button>
+        <ClientForm />
       </div>
 
       <div className="relative">
@@ -67,7 +70,7 @@ export default function Clients() {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
-                  Cliente desde {format(client.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+                  Cliente desde {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   Ver Detalhes

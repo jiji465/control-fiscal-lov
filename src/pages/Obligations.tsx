@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Filter, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,18 +10,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ObligationCard } from "@/components/obligations/ObligationCard";
-import { mockObligations } from "@/lib/mockData";
+import { ObligationForm } from "@/components/forms/ObligationForm";
+import { TaxTypeForm } from "@/components/forms/TaxTypeForm";
+import { useObligations } from "@/hooks/useObligations";
 import { ObligationStatus } from "@/types";
 
 export default function Obligations() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ObligationStatus | "all">("all");
+  const { obligations, isLoading } = useObligations();
 
-  const filteredObligations = mockObligations.filter((obligation) => {
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
+
+  const filteredObligations = obligations.filter((obligation) => {
     const matchesSearch =
       obligation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obligation.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obligation.taxType?.toLowerCase().includes(searchTerm.toLowerCase());
+      obligation.clients?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obligation.tax_types?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || obligation.status === statusFilter;
 
@@ -37,10 +44,10 @@ export default function Obligations() {
             Gerencie todas as obrigações acessórias e impostos
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Obrigação
-        </Button>
+        <div className="flex gap-2">
+          <TaxTypeForm />
+          <ObligationForm />
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -77,7 +84,23 @@ export default function Obligations() {
           </div>
         ) : (
           filteredObligations.map((obligation) => (
-            <ObligationCard key={obligation.id} obligation={obligation} />
+            <ObligationCard 
+              key={obligation.id} 
+              obligation={{
+                id: obligation.id,
+                title: obligation.title,
+                description: obligation.description,
+                clientId: obligation.client_id,
+                clientName: obligation.clients?.name,
+                taxType: obligation.tax_types?.name,
+                dueDate: new Date(obligation.due_date),
+                completedDate: obligation.completed_at ? new Date(obligation.completed_at) : undefined,
+                status: obligation.status,
+                recurrence: obligation.recurrence,
+                createdAt: new Date(obligation.created_at),
+                updatedAt: new Date(obligation.updated_at),
+              }} 
+            />
           ))
         )}
       </div>

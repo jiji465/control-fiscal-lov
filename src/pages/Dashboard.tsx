@@ -1,13 +1,19 @@
 import { FileText, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
-import { mockObligations } from "@/lib/mockData";
+import { useObligations } from "@/hooks/useObligations";
 
 export default function Dashboard() {
-  const totalObligations = mockObligations.length;
-  const completedObligations = mockObligations.filter((o) => o.status === "completed").length;
-  const overdueObligations = mockObligations.filter((o) => o.status === "overdue").length;
-  const pendingObligations = mockObligations.filter(
+  const { obligations, isLoading } = useObligations();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
+
+  const totalObligations = obligations.length;
+  const completedObligations = obligations.filter((o) => o.status === "completed").length;
+  const overdueObligations = obligations.filter((o) => o.status === "overdue").length;
+  const pendingObligations = obligations.filter(
     (o) => o.status === "pending" || o.status === "in_progress"
   ).length;
 
@@ -52,15 +58,28 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AlertsCard obligations={mockObligations} />
+        <AlertsCard obligations={obligations.map(o => ({
+          id: o.id,
+          title: o.title,
+          description: o.description,
+          clientId: o.client_id,
+          clientName: o.clients?.name,
+          taxType: o.tax_types?.name,
+          dueDate: new Date(o.due_date),
+          completedDate: o.completed_at ? new Date(o.completed_at) : undefined,
+          status: o.status,
+          recurrence: o.recurrence,
+          createdAt: new Date(o.created_at),
+          updatedAt: new Date(o.updated_at),
+        }))} />
         
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-card p-6">
             <h3 className="font-semibold mb-4">Resumo por Status</h3>
             <div className="space-y-3">
               {[
-                { label: "Pendentes", value: mockObligations.filter(o => o.status === "pending").length, color: "bg-pending" },
-                { label: "Em Andamento", value: mockObligations.filter(o => o.status === "in_progress").length, color: "bg-warning" },
+                { label: "Pendentes", value: obligations.filter(o => o.status === "pending").length, color: "bg-pending" },
+                { label: "Em Andamento", value: obligations.filter(o => o.status === "in_progress").length, color: "bg-warning" },
                 { label: "Concluídas", value: completedObligations, color: "bg-success" },
                 { label: "Atrasadas", value: overdueObligations, color: "bg-destructive" },
               ].map((item) => (

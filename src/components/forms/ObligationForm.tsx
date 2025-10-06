@@ -1,0 +1,189 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Loader2 } from "lucide-react";
+import { useObligations } from "@/hooks/useObligations";
+import { useClients } from "@/hooks/useClients";
+import { useTaxTypes } from "@/hooks/useTaxTypes";
+
+export function ObligationForm() {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [taxTypeId, setTaxTypeId] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [recurrence, setRecurrence] = useState<"none" | "monthly" | "quarterly" | "semiannual" | "annual">("none");
+  const [amount, setAmount] = useState("");
+  const [notes, setNotes] = useState("");
+  
+  const { createObligation } = useObligations();
+  const { clients } = useClients();
+  const { taxTypes } = useTaxTypes();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    await createObligation.mutateAsync({
+      title,
+      description: description || undefined,
+      client_id: clientId,
+      tax_type_id: taxTypeId || undefined,
+      due_date: dueDate,
+      status: "pending",
+      recurrence,
+      amount: amount ? parseFloat(amount) : undefined,
+      notes: notes || undefined,
+    });
+
+    // Reset form
+    setTitle("");
+    setDescription("");
+    setClientId("");
+    setTaxTypeId("");
+    setDueDate("");
+    setRecurrence("none");
+    setAmount("");
+    setNotes("");
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nova Obrigação
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Nova Obrigação Fiscal</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Título *</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: DCTF - Declaração de Débitos"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descrição detalhada da obrigação"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="client">Cliente *</Label>
+              <Select value={clientId} onValueChange={setClientId} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="taxType">Tipo de Imposto</Label>
+              <Select value={taxTypeId} onValueChange={setTaxTypeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {taxTypes.map((taxType) => (
+                    <SelectItem key={taxType.id} value={taxType.id}>
+                      {taxType.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Vencimento *</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="recurrence">Recorrência</Label>
+              <Select value={recurrence} onValueChange={(value: any) => setRecurrence(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não se repete</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="quarterly">Trimestral</SelectItem>
+                  <SelectItem value="semiannual">Semestral</SelectItem>
+                  <SelectItem value="annual">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="amount">Valor (R$)</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Notas adicionais sobre esta obrigação"
+              rows={2}
+            />
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={createObligation.isPending}>
+              {createObligation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Criar Obrigação
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
