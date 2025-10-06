@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          created_at: string
+          document: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      obligations: {
+        Row: {
+          amount: number | null
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          notes: string | null
+          recurrence: Database["public"]["Enums"]["recurrence_type"]
+          status: Database["public"]["Enums"]["obligation_status"]
+          tax_type_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          notes?: string | null
+          recurrence?: Database["public"]["Enums"]["recurrence_type"]
+          status?: Database["public"]["Enums"]["obligation_status"]
+          tax_type_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          notes?: string | null
+          recurrence?: Database["public"]["Enums"]["recurrence_type"]
+          status?: Database["public"]["Enums"]["obligation_status"]
+          tax_type_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obligations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obligations_tax_type_id_fkey"
+            columns: ["tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "tax_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +145,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      obligation_status: "pending" | "in_progress" | "completed" | "overdue"
+      recurrence_type:
+        | "monthly"
+        | "quarterly"
+        | "semiannual"
+        | "annual"
+        | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +278,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      obligation_status: ["pending", "in_progress", "completed", "overdue"],
+      recurrence_type: ["monthly", "quarterly", "semiannual", "annual", "none"],
+    },
   },
 } as const
