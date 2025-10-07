@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface TaxType {
   id: string;
-  user_id: string;
+  user_id?: string;
   name: string;
   description?: string;
   created_at: string;
@@ -29,12 +29,9 @@ export function useTaxTypes() {
 
   const createTaxType = useMutation({
     mutationFn: async (taxType: Omit<TaxType, "id" | "user_id" | "created_at">) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
       const { data, error } = await supabase
         .from("tax_types")
-        .insert([{ ...taxType, user_id: user.id }])
+        .insert([taxType])
         .select()
         .single();
 

@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface Client {
   id: string;
-  user_id: string;
+  user_id?: string;
   name: string;
   document: string;
   email?: string;
@@ -32,12 +32,9 @@ export function useClients() {
 
   const createClient = useMutation({
     mutationFn: async (client: Omit<Client, "id" | "user_id" | "created_at" | "updated_at">) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
       const { data, error } = await supabase
         .from("clients")
-        .insert([{ ...client, user_id: user.id }])
+        .insert([client])
         .select()
         .single();
 

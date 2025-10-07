@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface Obligation {
   id: string;
-  user_id: string;
+  user_id?: string;
   client_id: string;
   tax_type_id?: string;
   title: string;
@@ -48,12 +48,9 @@ export function useObligations() {
 
   const createObligation = useMutation({
     mutationFn: async (obligation: Omit<Obligation, "id" | "user_id" | "created_at" | "updated_at">) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
       const { data, error } = await supabase
         .from("obligations")
-        .insert([{ ...obligation, user_id: user.id }])
+        .insert([obligation])
         .select()
         .single();
 
