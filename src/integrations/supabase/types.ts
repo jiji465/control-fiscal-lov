@@ -47,6 +47,53 @@ export type Database = {
         }
         Relationships: []
       }
+      installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          installment_number: number
+          obligation_id: string
+          paid_at: string | null
+          status: string
+          total_installments: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_number: number
+          obligation_id: string
+          paid_at?: string | null
+          status?: string
+          total_installments: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          obligation_id?: string
+          paid_at?: string | null
+          status?: string
+          total_installments?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installments_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "obligations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obligations: {
         Row: {
           amount: number | null
@@ -58,6 +105,7 @@ export type Database = {
           id: string
           notes: string | null
           recurrence: Database["public"]["Enums"]["recurrence_type"]
+          responsible: string | null
           status: Database["public"]["Enums"]["obligation_status"]
           tax_type_id: string | null
           title: string
@@ -74,6 +122,7 @@ export type Database = {
           id?: string
           notes?: string | null
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
+          responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
           tax_type_id?: string | null
           title: string
@@ -90,6 +139,7 @@ export type Database = {
           id?: string
           notes?: string | null
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
+          responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
           tax_type_id?: string | null
           title?: string

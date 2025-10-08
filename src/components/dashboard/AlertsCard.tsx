@@ -1,20 +1,26 @@
-import { AlertCircle, Clock } from "lucide-react";
+import { AlertCircle, Clock, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Obligation } from "@/types";
-import { statusConfig } from "@/lib/statusConfig";
+import { Obligation } from "@/hooks/useObligations";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface AlertsCardProps {
-  obligations: Obligation[];
+  obligations: (Obligation & { clients?: { id: string; name: string } | null; tax_types?: { id: string; name: string } | null })[];
 }
+
+const statusConfig = {
+  pending: { label: "Pendente", badgeVariant: "secondary" as const },
+  in_progress: { label: "Em Andamento", badgeVariant: "default" as const },
+  completed: { label: "Concluída", badgeVariant: "default" as const },
+  overdue: { label: "Atrasada", badgeVariant: "destructive" as const },
+};
 
 export function AlertsCard({ obligations }: AlertsCardProps) {
   const today = new Date();
   const upcomingObligations = obligations
     .filter((o) => o.status !== "completed")
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .slice(0, 5);
 
   return (
@@ -34,7 +40,7 @@ export function AlertsCard({ obligations }: AlertsCardProps) {
           ) : (
             upcomingObligations.map((obligation) => {
               const daysUntilDue = Math.ceil(
-                (obligation.dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                (new Date(obligation.due_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
               );
               const config = statusConfig[obligation.status];
 
@@ -53,14 +59,22 @@ export function AlertsCard({ obligations }: AlertsCardProps) {
                         {config.label}
                       </Badge>
                     </div>
-                    {obligation.clientName && (
+                    {obligation.clients && (
                       <p className="text-xs text-muted-foreground">
-                        {obligation.clientName}
+                        {obligation.clients.name}
                       </p>
+                    )}
+                    {obligation.responsible && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <User className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">
+                          {obligation.responsible}
+                        </p>
+                      </div>
                     )}
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-xs text-muted-foreground">
-                        {format(obligation.dueDate, "dd/MM/yyyy", { locale: ptBR })}
+                        {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                       {daysUntilDue >= 0 && (
                         <span className="text-xs text-muted-foreground">

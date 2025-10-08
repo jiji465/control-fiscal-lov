@@ -86,20 +86,7 @@ export default function Obligations() {
           filteredObligations.map((obligation) => (
             <ObligationCard 
               key={obligation.id} 
-              obligation={{
-                id: obligation.id,
-                title: obligation.title,
-                description: obligation.description,
-                clientId: obligation.client_id,
-                clientName: obligation.clients?.name,
-                taxType: obligation.tax_types?.name,
-                dueDate: new Date(obligation.due_date),
-                completedDate: obligation.completed_at ? new Date(obligation.completed_at) : undefined,
-                status: obligation.status,
-                recurrence: obligation.recurrence,
-                createdAt: new Date(obligation.created_at),
-                updatedAt: new Date(obligation.updated_at),
-              }} 
+              obligation={obligation} 
             />
           ))
         )}

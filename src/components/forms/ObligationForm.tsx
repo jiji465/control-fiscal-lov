@@ -20,6 +20,9 @@ export function ObligationForm() {
   const [recurrence, setRecurrence] = useState<"none" | "monthly" | "quarterly" | "semiannual" | "annual">("none");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [responsible, setResponsible] = useState("");
+  const [hasInstallments, setHasInstallments] = useState(false);
+  const [installmentCount, setInstallmentCount] = useState("1");
   
   const { createObligation } = useObligations();
   const { clients } = useClients();
@@ -38,6 +41,7 @@ export function ObligationForm() {
       recurrence,
       amount: amount ? parseFloat(amount) : undefined,
       notes: notes || undefined,
+      responsible: responsible || undefined,
     });
 
     // Reset form
@@ -49,6 +53,9 @@ export function ObligationForm() {
     setRecurrence("none");
     setAmount("");
     setNotes("");
+    setResponsible("");
+    setHasInstallments(false);
+    setInstallmentCount("1");
     setOpen(false);
   };
 
@@ -159,6 +166,16 @@ export function ObligationForm() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0,00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="responsible">Responsável</Label>
+            <Input
+              id="responsible"
+              value={responsible}
+              onChange={(e) => setResponsible(e.target.value)}
+              placeholder="Nome do responsável pela obrigação"
             />
           </div>
 

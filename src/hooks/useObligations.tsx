@@ -15,6 +15,7 @@ export interface Obligation {
   recurrence: "none" | "monthly" | "quarterly" | "semiannual" | "annual";
   amount?: number;
   notes?: string;
+  responsible?: string;
   created_at: string;
   updated_at: string;
 }

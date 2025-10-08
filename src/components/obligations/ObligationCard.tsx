@@ -1,15 +1,29 @@
-import { CalendarIcon, Building2, Repeat, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Building2, Repeat, CheckCircle2, User } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Obligation } from "@/types";
-import { statusConfig, recurrenceLabels } from "@/lib/statusConfig";
+import { Obligation } from "@/hooks/useObligations";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface ObligationCardProps {
-  obligation: Obligation;
+  obligation: Obligation & { clients?: { id: string; name: string } | null; tax_types?: { id: string; name: string } | null };
 }
+
+const statusConfig = {
+  pending: { label: "Pendente", badgeVariant: "secondary" as const },
+  in_progress: { label: "Em Andamento", badgeVariant: "default" as const },
+  completed: { label: "Concluída", badgeVariant: "default" as const },
+  overdue: { label: "Atrasada", badgeVariant: "destructive" as const },
+};
+
+const recurrenceLabels = {
+  none: "Não se repete",
+  monthly: "Mensal",
+  quarterly: "Trimestral",
+  semiannual: "Semestral",
+  annual: "Anual",
+};
 
 export function ObligationCard({ obligation }: ObligationCardProps) {
   const config = statusConfig[obligation.status];
@@ -27,19 +41,26 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
       </CardHeader>
       
       <CardContent className="space-y-2 pb-3">
-        {obligation.clientName && (
+        {obligation.clients && (
           <div className="flex items-center gap-2 text-sm">
             <Building2 className="h-4 w-4 text-muted-foreground" />
-            <span>{obligation.clientName}</span>
+            <span>{obligation.clients.name}</span>
           </div>
         )}
         
         <div className="flex items-center gap-2 text-sm">
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           <span>
-            Vencimento: {format(obligation.dueDate, "dd/MM/yyyy", { locale: ptBR })}
+            Vencimento: {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
           </span>
         </div>
+
+        {obligation.responsible && (
+          <div className="flex items-center gap-2 text-sm">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span>{obligation.responsible}</span>
+          </div>
+        )}
 
         {obligation.recurrence !== "none" && (
           <div className="flex items-center gap-2 text-sm">
@@ -48,19 +69,19 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
           </div>
         )}
 
-        {obligation.completedDate && (
+        {obligation.completed_at && (
           <div className="flex items-center gap-2 text-sm text-success">
             <CheckCircle2 className="h-4 w-4" />
             <span>
-              Concluída em {format(obligation.completedDate, "dd/MM/yyyy", { locale: ptBR })}
+              Concluída em {format(new Date(obligation.completed_at), "dd/MM/yyyy", { locale: ptBR })}
             </span>
           </div>
         )}
 
-        {obligation.taxType && (
+        {obligation.tax_types && (
           <div className="mt-2">
             <Badge variant="outline" className="text-xs">
-              {obligation.taxType}
+              {obligation.tax_types.name}
             </Badge>
           </div>
         )}

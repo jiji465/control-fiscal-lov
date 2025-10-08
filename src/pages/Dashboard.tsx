@@ -58,20 +58,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AlertsCard obligations={obligations.map(o => ({
-          id: o.id,
-          title: o.title,
-          description: o.description,
-          clientId: o.client_id,
-          clientName: o.clients?.name,
-          taxType: o.tax_types?.name,
-          dueDate: new Date(o.due_date),
-          completedDate: o.completed_at ? new Date(o.completed_at) : undefined,
-          status: o.status,
-          recurrence: o.recurrence,
-          createdAt: new Date(o.created_at),
-          updatedAt: new Date(o.updated_at),
-        }))} />
+        <AlertsCard obligations={obligations} />
         
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-card p-6">
