@@ -48,12 +48,14 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
           </div>
         )}
         
-        <div className="flex items-center gap-2 text-sm">
-          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-          <span>
-            Vencimento: {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
-          </span>
-        </div>
+        {obligation.due_date && (
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            <span>
+              Vencimento: {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
+            </span>
+          </div>
+        )}
 
         {obligation.responsible && (
           <div className="flex items-center gap-2 text-sm">
