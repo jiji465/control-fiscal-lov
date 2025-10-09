@@ -55,10 +55,12 @@ export type Database = {
           id: string
           installment_number: number
           obligation_id: string
+          original_due_date: string | null
           paid_at: string | null
           status: string
           total_installments: number
           updated_at: string
+          weekend_handling: string | null
         }
         Insert: {
           amount: number
@@ -67,10 +69,12 @@ export type Database = {
           id?: string
           installment_number: number
           obligation_id: string
+          original_due_date?: string | null
           paid_at?: string | null
           status?: string
           total_installments: number
           updated_at?: string
+          weekend_handling?: string | null
         }
         Update: {
           amount?: number
@@ -79,10 +83,12 @@ export type Database = {
           id?: string
           installment_number?: number
           obligation_id?: string
+          original_due_date?: string | null
           paid_at?: string | null
           status?: string
           total_installments?: number
           updated_at?: string
+          weekend_handling?: string | null
         }
         Relationships: [
           {
@@ -104,6 +110,7 @@ export type Database = {
           due_date: string
           id: string
           notes: string | null
+          original_due_date: string | null
           recurrence: Database["public"]["Enums"]["recurrence_type"]
           responsible: string | null
           status: Database["public"]["Enums"]["obligation_status"]
@@ -111,6 +118,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string | null
+          weekend_handling: string | null
         }
         Insert: {
           amount?: number | null
@@ -121,6 +129,7 @@ export type Database = {
           due_date: string
           id?: string
           notes?: string | null
+          original_due_date?: string | null
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
@@ -128,6 +137,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id?: string | null
+          weekend_handling?: string | null
         }
         Update: {
           amount?: number | null
@@ -138,6 +148,7 @@ export type Database = {
           due_date?: string
           id?: string
           notes?: string | null
+          original_due_date?: string | null
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
@@ -145,6 +156,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+          weekend_handling?: string | null
         }
         Relationships: [
           {
@@ -186,6 +198,71 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      taxes: {
+        Row: {
+          amount: number | null
+          client_id: string
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          notes: string | null
+          original_due_date: string | null
+          paid_at: string | null
+          recurrence: string
+          responsible: string | null
+          status: string
+          tax_type_name: string
+          updated_at: string
+          user_id: string | null
+          weekend_handling: string | null
+        }
+        Insert: {
+          amount?: number | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          notes?: string | null
+          original_due_date?: string | null
+          paid_at?: string | null
+          recurrence?: string
+          responsible?: string | null
+          status?: string
+          tax_type_name: string
+          updated_at?: string
+          user_id?: string | null
+          weekend_handling?: string | null
+        }
+        Update: {
+          amount?: number | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          notes?: string | null
+          original_due_date?: string | null
+          paid_at?: string | null
+          recurrence?: string
+          responsible?: string | null
+          status?: string
+          tax_type_name?: string
+          updated_at?: string
+          user_id?: string | null
+          weekend_handling?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
