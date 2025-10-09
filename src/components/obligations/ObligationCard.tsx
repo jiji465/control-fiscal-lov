@@ -1,12 +1,13 @@
-import { CalendarIcon, Building2, Repeat, CheckCircle2, User, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Building2, Repeat, CheckCircle2, User, AlertTriangle, Edit } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Obligation } from "@/hooks/useObligations";
+import { Obligation, useObligations } from "@/hooks/useObligations";
 import { format, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { ObligationDetails } from "./ObligationDetails";
+import { ObligationEditForm } from "@/components/forms/ObligationEditForm";
 
 interface ObligationCardProps {
   obligation: Obligation & { clients?: { id: string; name: string } | null; tax_types?: { id: string; name: string } | null };
@@ -30,7 +31,18 @@ const recurrenceLabels = {
 export function ObligationCard({ obligation }: ObligationCardProps) {
   const config = statusConfig[obligation.status];
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const { updateObligation } = useObligations();
   const isWeekendDue = obligation.due_date ? isWeekend(new Date(obligation.due_date)) : false;
+
+  const handleQuickStatusChange = async (e: React.MouseEvent, newStatus: string) => {
+    e.stopPropagation();
+    await updateObligation.mutateAsync({
+      id: obligation.id,
+      status: newStatus as any,
+      completed_at: newStatus === "completed" ? new Date().toISOString() : undefined,
+    });
+  };
 
   return (
     <>
@@ -102,13 +114,59 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="pt-3 border-t">
-        <Button variant="outline" size="sm" className="w-full" onClick={(e) => {
-          e.stopPropagation();
-          setDetailsOpen(true);
-        }}>
-          Ver Detalhes
-        </Button>
+      <CardFooter className="pt-3 border-t flex flex-col gap-2">
+        <div className="flex gap-2 w-full">
+          {obligation.status === "pending" && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={(e) => handleQuickStatusChange(e, "in_progress")}
+              >
+                Iniciar
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="flex-1"
+                onClick={(e) => handleQuickStatusChange(e, "completed")}
+              >
+                Concluir
+              </Button>
+            </>
+          )}
+          {obligation.status === "in_progress" && (
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="flex-1"
+              onClick={(e) => handleQuickStatusChange(e, "completed")}
+            >
+              Concluir
+            </Button>
+          )}
+          {obligation.status === "completed" && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={(e) => handleQuickStatusChange(e, "pending")}
+            >
+              Reabrir
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditOpen(true);
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
       </CardFooter>
     </Card>
     
@@ -116,6 +174,12 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
       obligation={obligation} 
       open={detailsOpen} 
       onOpenChange={setDetailsOpen} 
+    />
+    
+    <ObligationEditForm
+      obligation={obligation}
+      open={editOpen}
+      onOpenChange={setEditOpen}
     />
     </>
   );

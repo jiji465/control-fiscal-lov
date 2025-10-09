@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, Calendar, Menu } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calendar, CreditCard } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -16,6 +16,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Obrigações", url: "/obligations", icon: FileText },
+  { title: "Parcelamentos", url: "/installments", icon: CreditCard },
   { title: "Clientes", url: "/clients", icon: Users },
   { title: "Agenda", url: "/calendar", icon: Calendar },
 ];
