@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Loader2 } from "lucide-react";
 import { useObligations } from "@/hooks/useObligations";
 import { useClients } from "@/hooks/useClients";
 import { useTaxTypes } from "@/hooks/useTaxTypes";
+import { useInstallments } from "@/hooks/useInstallments";
+import { addMonths, format } from "date-fns";
 
 export function ObligationForm() {
   const [open, setOpen] = useState(false);
@@ -27,11 +30,12 @@ export function ObligationForm() {
   const { createObligation } = useObligations();
   const { clients } = useClients();
   const { taxTypes } = useTaxTypes();
+  const { createInstallment } = useInstallments();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    await createObligation.mutateAsync({
+    const obligation = await createObligation.mutateAsync({
       title,
       description: description || undefined,
       client_id: clientId,
@@ -43,6 +47,24 @@ export function ObligationForm() {
       notes: notes || undefined,
       responsible: responsible || undefined,
     });
+
+    // Criar parcelas se necessário
+    if (hasInstallments && installmentCount && parseInt(installmentCount) > 1) {
+      const totalInstallments = parseInt(installmentCount);
+      const installmentAmount = amount ? parseFloat(amount) / totalInstallments : 0;
+      
+      for (let i = 1; i <= totalInstallments; i++) {
+        const installmentDueDate = format(addMonths(new Date(dueDate), i - 1), "yyyy-MM-dd");
+        await createInstallment.mutateAsync({
+          obligation_id: obligation.id,
+          installment_number: i,
+          total_installments: totalInstallments,
+          amount: installmentAmount,
+          due_date: installmentDueDate,
+          status: "pending",
+        });
+      }
+    }
 
     // Reset form
     setTitle("");
@@ -188,6 +210,39 @@ export function ObligationForm() {
               placeholder="Notas adicionais sobre esta obrigação"
               rows={2}
             />
+          </div>
+
+          <div className="space-y-4 border-t pt-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasInstallments"
+                checked={hasInstallments}
+                onCheckedChange={(checked) => setHasInstallments(checked as boolean)}
+              />
+              <Label htmlFor="hasInstallments" className="font-normal cursor-pointer">
+                Dividir em parcelas
+              </Label>
+            </div>
+
+            {hasInstallments && (
+              <div className="space-y-2 pl-6">
+                <Label htmlFor="installmentCount">Número de Parcelas</Label>
+                <Input
+                  id="installmentCount"
+                  type="number"
+                  min="2"
+                  max="12"
+                  value={installmentCount}
+                  onChange={(e) => setInstallmentCount(e.target.value)}
+                  placeholder="Ex: 3"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {amount && installmentCount && parseInt(installmentCount) > 1
+                    ? `${installmentCount}x de R$ ${(parseFloat(amount) / parseInt(installmentCount)).toFixed(2)}`
+                    : "Informe o valor para ver o cálculo"}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 justify-end">

@@ -1,10 +1,12 @@
-import { CalendarIcon, Building2, Repeat, CheckCircle2, User } from "lucide-react";
+import { CalendarIcon, Building2, Repeat, CheckCircle2, User, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Obligation } from "@/hooks/useObligations";
-import { format } from "date-fns";
+import { format, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
+import { ObligationDetails } from "./ObligationDetails";
 
 interface ObligationCardProps {
   obligation: Obligation & { clients?: { id: string; name: string } | null; tax_types?: { id: string; name: string } | null };
@@ -27,9 +29,12 @@ const recurrenceLabels = {
 
 export function ObligationCard({ obligation }: ObligationCardProps) {
   const config = statusConfig[obligation.status];
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const isWeekendDue = obligation.due_date ? isWeekend(new Date(obligation.due_date)) : false;
 
   return (
-    <Card className="hover:shadow-md transition-all">
+    <>
+      <Card className="hover:shadow-md transition-all cursor-pointer" onClick={() => setDetailsOpen(true)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold leading-tight">{obligation.title}</h3>
@@ -51,9 +56,17 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
         {obligation.due_date && (
           <div className="flex items-center gap-2 text-sm">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            <span>
-              Vencimento: {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
-            </span>
+            <div className="flex items-center gap-2">
+              <span>
+                Vencimento: {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
+              </span>
+              {isWeekendDue && (
+                <div className="flex items-center gap-1 text-warning" title="Vence no final de semana">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span className="text-xs">FDS</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -90,10 +103,20 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
       </CardContent>
 
       <CardFooter className="pt-3 border-t">
-        <Button variant="outline" size="sm" className="w-full">
+        <Button variant="outline" size="sm" className="w-full" onClick={(e) => {
+          e.stopPropagation();
+          setDetailsOpen(true);
+        }}>
           Ver Detalhes
         </Button>
       </CardFooter>
     </Card>
+    
+    <ObligationDetails 
+      obligation={obligation} 
+      open={detailsOpen} 
+      onOpenChange={setDetailsOpen} 
+    />
+    </>
   );
 }
