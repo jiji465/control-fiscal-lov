@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, Calendar, CreditCard, Receipt } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calendar, CreditCard, Receipt, BarChart3 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const menuItems = [
   { title: "Parcelamentos", url: "/installments", icon: CreditCard },
   { title: "Clientes", url: "/clients", icon: Users },
   { title: "Agenda", url: "/calendar", icon: Calendar },
+  { title: "Análises", url: "/analytics", icon: BarChart3 },
 ];
 
 export function AppSidebar() {

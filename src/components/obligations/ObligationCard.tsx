@@ -46,14 +46,14 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
 
   return (
     <>
-      <Card className="hover:shadow-md transition-all cursor-pointer" onClick={() => setDetailsOpen(true)}>
-      <CardHeader className="pb-3">
+      <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-200 bg-card/50 cursor-pointer" onClick={() => setDetailsOpen(true)}>
+      <CardHeader className="pb-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight">{obligation.title}</h3>
-          <Badge variant={config.badgeVariant}>{config.label}</Badge>
+          <h3 className="text-base font-medium text-foreground leading-tight">{obligation.title}</h3>
+          <Badge variant={config.badgeVariant} className="font-normal">{config.label}</Badge>
         </div>
         {obligation.description && (
-          <p className="text-sm text-muted-foreground mt-1">{obligation.description}</p>
+          <p className="text-sm text-muted-foreground font-normal mt-1">{obligation.description}</p>
         )}
       </CardHeader>
       

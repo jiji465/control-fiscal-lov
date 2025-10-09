@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInstallments } from "@/hooks/useInstallments";
 import { useObligations } from "@/hooks/useObligations";
 import { InstallmentCard } from "@/components/installments/InstallmentCard";
-import { Search } from "lucide-react";
+import { InstallmentForm } from "@/components/forms/InstallmentForm";
+import { Search, Plus } from "lucide-react";
 
 export default function Installments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [formOpen, setFormOpen] = useState(false);
   const { installments, isLoading } = useInstallments();
   const { obligations } = useObligations();
 
@@ -42,13 +45,21 @@ export default function Installments() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Parcelamentos</h1>
-        <p className="text-muted-foreground mt-1">
-          Gerencie todas as parcelas de obrigações
-        </p>
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold">Parcelamentos</h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie todas as parcelas de obrigações
+          </p>
+        </div>
+        <Button onClick={() => setFormOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Parcela
+        </Button>
       </div>
+
+      <InstallmentForm open={formOpen} onOpenChange={setFormOpen} />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>

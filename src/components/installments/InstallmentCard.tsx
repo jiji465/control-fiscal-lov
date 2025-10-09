@@ -41,11 +41,11 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-all">
-      <CardHeader className="pb-3">
+    <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-200 bg-card/50">
+      <CardHeader className="pb-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="font-semibold leading-tight">
+            <h3 className="text-base font-medium text-foreground leading-tight">
               Parcela {installment.installment_number}/{installment.total_installments}
             </h3>
             {installment.obligation && (
