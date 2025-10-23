@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, getDay, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle, PartyPopper } from "lucide-react";
-import { useObligations } from "@/hooks/useObligations";
-import { useInstallments } from "@/hooks/useInstallments";
-import { useTaxes } from "@/hooks/useTaxes";
+import { ChevronLeft, ChevronRight, FileText, Landmark, Repeat, Star, AlertTriangle, Receipt, CreditCard } from "lucide-react";
+import { useObligations, Obligation } from "@/hooks/useObligations";
+import { useInstallments, Installment } from "@/hooks/useInstallments";
+import { useTaxes, Tax } from "@/hooks/useTaxes";
 import { holidays } from "@/lib/holidays";
+import { generateRecurrencesForPeriod, RecurrableItem } from "@/lib/recurrence";
 
 const statusColors = {
   pending: "bg-pending/10 text-pending border-pending/30",
@@ -23,8 +24,10 @@ const typeColors = {
   installment: "border-l-4 border-l-green-500",
 };
 
+type CalendarItem = (Obligation | Tax | Installment) & { type: string; isRecurrence?: boolean; title?: string; client?: { name: string } | null; };
+
 export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date("2025-01-01"));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
   const { obligations } = useObligations();
   const { installments } = useInstallments();
@@ -32,17 +35,41 @@ export default function Calendar() {
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
 
   const holidaysMap = holidays.reduce((acc, holiday) => {
     acc[holiday.date] = holiday.name;
     return acc;
   }, {} as Record<string, string>);
 
-  const allItems = [
-    ...obligations.map((o: any) => ({ ...o, type: 'obligation' })),
-    ...taxes.map((t: any) => ({ ...t, type: 'tax' })),
-    ...installments.map((i: any) => ({ ...i, type: 'installment' })),
+  const recurringObligations = obligations.filter(o => o.recurrence);
+  const nonRecurringObligations = obligations.filter(o => !o.recurrence);
+
+  const recurringTaxes = taxes.filter(t => t.recurrence);
+  const nonRecurringTaxes = taxes.filter(t => !t.recurrence);
+
+  const recurrences = [
+    ...recurringObligations.flatMap((o: RecurrableItem) => generateRecurrencesForPeriod(o, startDate, endDate)),
+    ...recurringTaxes.flatMap((t: RecurrableItem) => generateRecurrencesForPeriod(t, startDate, endDate)),
+  ];
+
+  const allItems: CalendarItem[] = [
+    ...nonRecurringObligations.map((o): CalendarItem => ({ ...o, type: 'obligation' })),
+    ...nonRecurringTaxes.map((t): CalendarItem => ({ ...t, type: 'tax' })),
+    ...installments.map((i): CalendarItem => ({ ...i, type: 'installment' })),
+    ...recurrences.map(r => {
+      const parent = [...recurringObligations, ...recurringTaxes].find(item => item.id === r.parentId) as Obligation | Tax | undefined;
+      const type = 'tax_type_name' in parent! ? 'tax' : 'obligation';
+      return {
+        ...parent!,
+        type,
+        due_date: r.date,
+        isRecurrence: true,
+        id: `${parent!.id}-${r.date}`
+      };
+    })
   ];
 
   const filteredItems = allItems.filter(item => {
@@ -53,36 +80,27 @@ export default function Calendar() {
     return true;
   });
 
-  const itemsByDate = filteredItems.reduce((acc: any, item: any) => {
+  const itemsByDate = filteredItems.reduce((acc: Record<string, CalendarItem[]>, item: CalendarItem) => {
     const dueDate = item.due_date;
     if (!dueDate) return acc;
 
     if (!acc[dueDate]) {
       acc[dueDate] = [];
     }
-
-    let title = "";
-    let client = null;
     
+    let title = "";
+    const client = null;
+
     if (item.type === 'installment') {
-      title = `Parcela ${item.installment_number}/${item.total_installments}`;
-      if (item.obligation?.title) title += ` - ${item.obligation.title}`;
-      client = item.obligation?.clients;
+      const installment = item as Installment;
+      title = `Parcela ${installment.installment_number}/${installment.total_installments}`;
     } else if (item.type === 'tax') {
-      title = item.tax_type_name;
-      client = item.clients;
+      title = (item as Tax).tax_type_name;
     } else {
-      title = item.title;
-      client = item.clients;
+      title = (item as Obligation).title;
     }
 
-    acc[dueDate].push({
-      id: item.id,
-      title,
-      status: item.status,
-      client,
-      type: item.type,
-    });
+    acc[dueDate].push({ ...item, title, client });
 
     return acc;
   }, {});
@@ -98,28 +116,27 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Legendas e Filtros */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500" />
-            <span className="text-sm font-normal">Obrigações</span>
+            <FileText className="h-4 w-4 text-blue-500" />
+            <span className="text-sm font-medium">Obrigações</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-purple-500" />
-            <span className="text-sm font-normal">Impostos</span>
+            <Landmark className="h-4 w-4 text-purple-500" />
+            <span className="text-sm font-medium">Impostos</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500" />
-            <span className="text-sm font-normal">Parcelamentos</span>
+            <Repeat className="h-4 w-4 text-green-500" />
+            <span className="text-sm font-medium">Parcelamentos</span>
           </div>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3 w-3 text-warning" />
-            <span className="text-sm font-normal">Final de Semana</span>
+            <Star className="h-4 w-4 text-yellow-500" />
+            <span className="text-sm font-medium">Feriado</span>
           </div>
           <div className="flex items-center gap-2">
-            <PartyPopper className="h-3 w-3 text-success" />
-            <span className="text-sm font-normal">Feriado</span>
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span className="text-sm font-medium">Final de Semana</span>
           </div>
         </div>
 
@@ -208,6 +225,12 @@ export default function Calendar() {
               return (
                 <div
                   key={index}
+                  role="gridcell"
+                  aria-label={`
+                    ${format(day, "d 'de' MMMM", { locale: ptBR })},
+                    ${isHoliday ? isHoliday : ''},
+                    ${isWeekend ? 'Fim de semana' : 'Dia de semana'}
+                  `}
                   className={`min-h-[120px] bg-card p-2 transition-colors hover:bg-accent/5 ${
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
@@ -225,21 +248,21 @@ export default function Calendar() {
                       {format(day, "d")}
                     </span>
                     {isHoliday ? (
-                      <PartyPopper className="h-3 w-3 text-success" />
+                      <Star className="h-4 w-4 text-yellow-500" />
                     ) : (
                       isWeekend && items.length > 0 && (
-                        <AlertTriangle className="h-3 w-3 text-warning" />
+                        <AlertTriangle className="h-4 w-4 text-warning" />
                       )
                     )}
                   </div>
 
                   <div className="space-y-1">
                     {isHoliday && (
-                      <div className="text-xs text-success font-medium truncate">
+                      <div className="text-xs text-yellow-600 font-medium truncate">
                         {isHoliday}
                       </div>
                     )}
-                    {items.slice(0, 3).map((item: any) => (
+                    {items.slice(0, 3).map((item: CalendarItem) => (
                       <div
                         key={item.id}
                         className={`text-xs p-1.5 rounded border ${
@@ -249,9 +272,9 @@ export default function Calendar() {
                         } truncate`}
                       >
                         <div className="font-normal flex items-center gap-1">
-                          {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'obligation' && <FileText className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'tax' && <Landmark className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'installment' && <Repeat className="h-2.5 w-2.5 inline" />}
                           {item.title}
                         </div>
                         {item.client && (

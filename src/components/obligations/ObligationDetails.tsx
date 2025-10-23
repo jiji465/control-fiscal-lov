@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Obligation } from "@/hooks/useObligations";
@@ -51,7 +51,10 @@ export function ObligationDetails({ obligation, open, onOpenChange }: Obligation
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
-            <DialogTitle className="text-2xl">{obligation.title}</DialogTitle>
+            <div>
+              <DialogTitle className="text-2xl">{obligation.title}</DialogTitle>
+              <DialogDescription>Detalhes da obrigação fiscal.</DialogDescription>
+            </div>
             <Badge variant={statusConfig[obligation.status].variant}>
               {statusConfig[obligation.status].label}
             </Badge>
