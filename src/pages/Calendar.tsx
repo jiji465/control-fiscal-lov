@@ -24,7 +24,7 @@ const typeColors = {
   installment: "border-l-4 border-l-green-500",
 };
 
-type CalendarItem = (Obligation | Tax | Installment) & { type: string; isRecurrence?: boolean; };
+type CalendarItem = (Obligation | Tax | Installment) & { type: string; isRecurrence?: boolean; title?: string; client?: { name: string } | null; };
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -44,25 +44,30 @@ export default function Calendar() {
     return acc;
   }, {} as Record<string, string>);
 
-  // Gera recorrências para o período visível
+  const recurringObligations = obligations.filter(o => o.recurrence);
+  const nonRecurringObligations = obligations.filter(o => !o.recurrence);
+
+  const recurringTaxes = taxes.filter(t => t.recurrence);
+  const nonRecurringTaxes = taxes.filter(t => !t.recurrence);
+
   const recurrences = [
-    ...obligations.flatMap((o: RecurrableItem) => generateRecurrencesForPeriod(o, startDate, endDate)),
-    ...taxes.flatMap((t: RecurrableItem) => generateRecurrencesForPeriod(t, startDate, endDate)),
+    ...recurringObligations.flatMap((o: RecurrableItem) => generateRecurrencesForPeriod(o, startDate, endDate)),
+    ...recurringTaxes.flatMap((t: RecurrableItem) => generateRecurrencesForPeriod(t, startDate, endDate)),
   ];
 
   const allItems: CalendarItem[] = [
-    ...obligations.map((o): CalendarItem => ({ ...o, type: 'obligation', isRecurrence: false })),
-    ...taxes.map((t): CalendarItem => ({ ...t, type: 'tax', isRecurrence: false })),
+    ...nonRecurringObligations.map((o): CalendarItem => ({ ...o, type: 'obligation' })),
+    ...nonRecurringTaxes.map((t): CalendarItem => ({ ...t, type: 'tax' })),
     ...installments.map((i): CalendarItem => ({ ...i, type: 'installment' })),
-    // Adiciona as ocorrências recorrentes, buscando o item original para obter os detalhes
     ...recurrences.map(r => {
-      const parent = [...obligations, ...taxes].find(item => item.id === r.parentId) as Obligation | Tax | undefined;
+      const parent = [...recurringObligations, ...recurringTaxes].find(item => item.id === r.parentId) as Obligation | Tax | undefined;
+      const type = 'tax_type_name' in parent! ? 'tax' : 'obligation';
       return {
         ...parent!,
-        type: 'obligation', // Default type, adjust as necessary
+        type,
         due_date: r.date,
         isRecurrence: true,
-        id: `${parent!.id}-${r.date}` // ID único para a ocorrência
+        id: `${parent!.id}-${r.date}`
       };
     })
   ];
@@ -82,31 +87,20 @@ export default function Calendar() {
     if (!acc[dueDate]) {
       acc[dueDate] = [];
     }
-
-    let title = "";
-    let client = null;
     
+    let title = "";
+    const client = null;
+
     if (item.type === 'installment') {
       const installment = item as Installment;
       title = `Parcela ${installment.installment_number}/${installment.total_installments}`;
-      // Acessar a obrigação associada para obter o título e o cliente
     } else if (item.type === 'tax') {
-      const tax = item as Tax;
-      title = tax.tax_type_name;
-      // Acessar o cliente associado
+      title = (item as Tax).tax_type_name;
     } else {
-        const obligation = item as Obligation;
-        title = obligation.title;
-        // Acessar o cliente associado
+      title = (item as Obligation).title;
     }
 
-    acc[dueDate].push({
-      ...item,
-      id: item.id,
-      title,
-      status: item.status,
-      client,
-    });
+    acc[dueDate].push({ ...item, title, client });
 
     return acc;
   }, {});
@@ -122,7 +116,6 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Legendas e Filtros */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2">
@@ -282,13 +275,10 @@ export default function Calendar() {
                           {item.type === 'obligation' && <FileText className="h-2.5 w-2.5 inline" />}
                           {item.type === 'tax' && <Landmark className="h-2.5 w-2.5 inline" />}
                           {item.type === 'installment' && <Repeat className="h-2.5 w-2.5 inline" />}
-                          {/* @ts-ignore */}
                           {item.title}
                         </div>
-                        {/* @ts-ignore */}
                         {item.client && (
                           <div className="text-xs opacity-75 truncate">
-                            {/* @ts-ignore */}
                             {item.client.name}
                           </div>
                         )}
