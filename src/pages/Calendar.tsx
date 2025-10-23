@@ -3,7 +3,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle, PartyPopper } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Landmark, Repeat, Star, AlertTriangle, Receipt, CreditCard } from "lucide-react";
 import { useObligations } from "@/hooks/useObligations";
 import { useInstallments } from "@/hooks/useInstallments";
 import { useTaxes } from "@/hooks/useTaxes";
@@ -24,7 +24,7 @@ const typeColors = {
 };
 
 export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date("2025-01-01"));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
   const { obligations } = useObligations();
   const { installments } = useInstallments();
@@ -104,24 +104,24 @@ export default function Calendar() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500" />
-            <span className="text-sm font-normal">Obrigações</span>
+            <FileText className="h-4 w-4 text-blue-500" />
+            <span className="text-sm font-medium">Obrigações</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-purple-500" />
-            <span className="text-sm font-normal">Impostos</span>
+            <Landmark className="h-4 w-4 text-purple-500" />
+            <span className="text-sm font-medium">Impostos</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500" />
-            <span className="text-sm font-normal">Parcelamentos</span>
+            <Repeat className="h-4 w-4 text-green-500" />
+            <span className="text-sm font-medium">Parcelamentos</span>
           </div>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3 w-3 text-warning" />
-            <span className="text-sm font-normal">Final de Semana</span>
+            <Star className="h-4 w-4 text-yellow-500" />
+            <span className="text-sm font-medium">Feriado</span>
           </div>
           <div className="flex items-center gap-2">
-            <PartyPopper className="h-3 w-3 text-success" />
-            <span className="text-sm font-normal">Feriado</span>
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span className="text-sm font-medium">Final de Semana</span>
           </div>
         </div>
 
@@ -210,6 +210,12 @@ export default function Calendar() {
               return (
                 <div
                   key={index}
+                  role="gridcell"
+                  aria-label={`
+                    ${format(day, "d 'de' MMMM", { locale: ptBR })},
+                    ${isHoliday ? isHoliday : ''},
+                    ${isWeekend ? 'Fim de semana' : 'Dia de semana'}
+                  `}
                   className={`min-h-[120px] bg-card p-2 transition-colors hover:bg-accent/5 ${
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
@@ -227,17 +233,17 @@ export default function Calendar() {
                       {format(day, "d")}
                     </span>
                     {isHoliday ? (
-                      <PartyPopper className="h-3 w-3 text-success" />
+                      <Star className="h-4 w-4 text-yellow-500" />
                     ) : (
                       isWeekend && items.length > 0 && (
-                        <AlertTriangle className="h-3 w-3 text-warning" />
+                        <AlertTriangle className="h-4 w-4 text-warning" />
                       )
                     )}
                   </div>
 
                   <div className="space-y-1">
                     {isHoliday && (
-                      <div className="text-xs text-success font-medium truncate">
+                      <div className="text-xs text-yellow-600 font-medium truncate">
                         {isHoliday}
                       </div>
                     )}
@@ -251,9 +257,9 @@ export default function Calendar() {
                         } truncate`}
                       >
                         <div className="font-normal flex items-center gap-1">
-                          {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'obligation' && <FileText className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'tax' && <Landmark className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'installment' && <Repeat className="h-2.5 w-2.5 inline" />}
                           {item.title}
                         </div>
                         {item.client && (
