@@ -24,7 +24,12 @@ const typeColors = {
   installment: "border-l-4 border-l-green-500",
 };
 
-type CalendarItem = (Obligation | Tax | Installment) & { type: string; isRecurrence?: boolean; title?: string; client?: { name: string } | null; };
+type CalendarItem = (Obligation | Tax | Installment) & {
+  type: 'obligation' | 'tax' | 'installment';
+  isRecurrence?: boolean;
+  title?: string;
+  client?: { name: string } | null;
+};
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -44,32 +49,32 @@ export default function Calendar() {
     return acc;
   }, {} as Record<string, string>);
 
-  const recurringObligations = obligations.filter(o => o.recurrence);
+  const recurringItems = [...obligations, ...taxes].filter(item => item.recurrence);
   const nonRecurringObligations = obligations.filter(o => !o.recurrence);
-
-  const recurringTaxes = taxes.filter(t => t.recurrence);
   const nonRecurringTaxes = taxes.filter(t => !t.recurrence);
 
-  const recurrences = [
-    ...recurringObligations.flatMap((o: RecurrableItem) => generateRecurrencesForPeriod(o, startDate, endDate)),
-    ...recurringTaxes.flatMap((t: RecurrableItem) => generateRecurrencesForPeriod(t, startDate, endDate)),
-  ];
+  const recurrences = recurringItems.flatMap((item: RecurrableItem) =>
+    generateRecurrencesForPeriod(item, startDate, endDate)
+  );
 
   const allItems: CalendarItem[] = [
     ...nonRecurringObligations.map((o): CalendarItem => ({ ...o, type: 'obligation' })),
     ...nonRecurringTaxes.map((t): CalendarItem => ({ ...t, type: 'tax' })),
     ...installments.map((i): CalendarItem => ({ ...i, type: 'installment' })),
     ...recurrences.map(r => {
-      const parent = [...recurringObligations, ...recurringTaxes].find(item => item.id === r.parentId) as Obligation | Tax | undefined;
-      const type = 'tax_type_name' in parent! ? 'tax' : 'obligation';
+      const parent = recurringItems.find(item => item.id === r.parentId);
+      if (!parent) return null; // Proteção contra pai não encontrado
+
+      const type = 'tax_type_name' in parent ? 'tax' : 'obligation';
+
       return {
-        ...parent!,
+        ...parent,
         type,
         due_date: r.date,
         isRecurrence: true,
-        id: `${parent!.id}-${r.date}`
+        id: `${parent.id}-${r.date}`
       };
-    })
+    }).filter((item): item is CalendarItem => item !== null) // Filtra os nulos
   ];
 
   const filteredItems = allItems.filter(item => {
@@ -89,11 +94,10 @@ export default function Calendar() {
     }
     
     let title = "";
-    const client = null;
+    const client = null; // Simplificado por enquanto
 
     if (item.type === 'installment') {
-      const installment = item as Installment;
-      title = `Parcela ${installment.installment_number}/${installment.total_installments}`;
+      title = `Parcela ${(item as Installment).installment_number}/${(item as Installment).total_installments}`;
     } else if (item.type === 'tax') {
       title = (item as Tax).tax_type_name;
     } else {
