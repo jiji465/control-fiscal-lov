@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RecurrenceRule } from "@/lib/recurrence";
 
 export interface Obligation {
   id: string;
@@ -12,7 +13,7 @@ export interface Obligation {
   due_date: string;
   completed_at?: string;
   status: "pending" | "in_progress" | "completed" | "overdue";
-  recurrence: "none" | "monthly" | "quarterly" | "semiannual" | "annual";
+  recurrence?: RecurrenceRule;
   amount?: number;
   notes?: string;
   responsible?: string;

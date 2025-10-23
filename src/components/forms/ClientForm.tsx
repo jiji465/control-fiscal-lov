@@ -44,7 +44,7 @@ export function ClientForm() {
         <DialogHeader>
           <DialogTitle>Novo Cliente</DialogTitle>
           <DialogDescription>
-            {client ? "Atualize as informações do cliente abaixo." : "Preencha as informações do novo cliente abaixo."}
+            Preencha as informações do novo cliente abaixo.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
