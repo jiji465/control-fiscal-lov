@@ -3,10 +3,11 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle, PartyPopper } from "lucide-react";
 import { useObligations } from "@/hooks/useObligations";
 import { useInstallments } from "@/hooks/useInstallments";
 import { useTaxes } from "@/hooks/useTaxes";
+import { holidays } from "@/lib/holidays";
 
 const statusColors = {
   pending: "bg-pending/10 text-pending border-pending/30",
@@ -23,7 +24,7 @@ const typeColors = {
 };
 
 export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date("2025-01-01"));
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
   const { obligations } = useObligations();
   const { installments } = useInstallments();
@@ -32,6 +33,11 @@ export default function Calendar() {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  const holidaysMap = holidays.reduce((acc, holiday) => {
+    acc[holiday.date] = holiday.name;
+    return acc;
+  }, {} as Record<string, string>);
 
   const allItems = [
     ...obligations.map((o: any) => ({ ...o, type: 'obligation' })),
@@ -110,6 +116,10 @@ export default function Calendar() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-3 w-3 text-warning" />
             <span className="text-sm font-normal">Final de Semana</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <PartyPopper className="h-3 w-3 text-success" />
+            <span className="text-sm font-normal">Feriado</span>
           </div>
         </div>
 
@@ -193,6 +203,7 @@ export default function Calendar() {
               const isCurrentDay = isToday(day);
               const dayOfWeek = getDay(day);
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              const isHoliday = holidaysMap[dayStr];
 
               return (
                 <div
@@ -201,7 +212,7 @@ export default function Calendar() {
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
                     isWeekend ? "bg-muted/30" : ""
-                  }`}
+                  } ${isHoliday ? "bg-success/10" : ""}`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span
@@ -213,12 +224,21 @@ export default function Calendar() {
                     >
                       {format(day, "d")}
                     </span>
-                    {isWeekend && items.length > 0 && (
-                      <AlertTriangle className="h-3 w-3 text-warning" />
+                    {isHoliday ? (
+                      <PartyPopper className="h-3 w-3 text-success" />
+                    ) : (
+                      isWeekend && items.length > 0 && (
+                        <AlertTriangle className="h-3 w-3 text-warning" />
+                      )
                     )}
                   </div>
 
                   <div className="space-y-1">
+                    {isHoliday && (
+                      <div className="text-xs text-success font-medium truncate">
+                        {isHoliday}
+                      </div>
+                    )}
                     {items.slice(0, 3).map((item: any) => (
                       <div
                         key={item.id}
