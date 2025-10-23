@@ -49,21 +49,25 @@ export default function Calendar() {
     return acc;
   }, {} as Record<string, string>);
 
-  const recurringItems = [...obligations, ...taxes].filter(item => item.recurrence);
-  const nonRecurringObligations = obligations.filter(o => !o.recurrence);
-  const nonRecurringTaxes = taxes.filter(t => !t.recurrence);
+  const recurringItems = [...obligations, ...taxes].filter(item => item.recurrence && item.recurrence.type !== 'none');
+  const nonRecurringItems = [
+    ...obligations.filter(o => !o.recurrence || o.recurrence.type === 'none'),
+    ...taxes.filter(t => !t.recurrence || t.recurrence.type === 'none'),
+  ];
 
   const recurrences = recurringItems.flatMap((item: RecurrableItem) =>
     generateRecurrencesForPeriod(item, startDate, endDate)
   );
 
   const allItems: CalendarItem[] = [
-    ...nonRecurringObligations.map((o): CalendarItem => ({ ...o, type: 'obligation' })),
-    ...nonRecurringTaxes.map((t): CalendarItem => ({ ...t, type: 'tax' })),
+    ...nonRecurringItems.map((item): CalendarItem => ({
+      ...item,
+      type: 'tax_type_name' in item ? 'tax' : 'obligation',
+    })),
     ...installments.map((i): CalendarItem => ({ ...i, type: 'installment' })),
     ...recurrences.map(r => {
       const parent = recurringItems.find(item => item.id === r.parentId);
-      if (!parent) return null; // Proteção contra pai não encontrado
+      if (!parent) return null;
 
       const type = 'tax_type_name' in parent ? 'tax' : 'obligation';
 
@@ -72,9 +76,9 @@ export default function Calendar() {
         type,
         due_date: r.date,
         isRecurrence: true,
-        id: `${parent.id}-${r.date}`
+        id: `rec-${parent.id}-${r.date}` // Prefixo para garantir unicidade
       };
-    }).filter((item): item is CalendarItem => item !== null) // Filtra os nulos
+    }).filter((item): item is CalendarItem => item !== null)
   ];
 
   const filteredItems = allItems.filter(item => {
@@ -217,7 +221,7 @@ export default function Calendar() {
               </div>
             ))}
 
-            {days.map((day, index) => {
+            {days.map((day) => {
               const dayStr = format(day, "yyyy-MM-dd");
               const items = itemsByDate[dayStr] || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
@@ -228,7 +232,7 @@ export default function Calendar() {
 
               return (
                 <div
-                  key={index}
+                  key={dayStr}
                   role="gridcell"
                   aria-label={`
                     ${format(day, "d 'de' MMMM", { locale: ptBR })},
