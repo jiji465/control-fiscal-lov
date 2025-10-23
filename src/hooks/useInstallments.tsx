@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Recurrence } from "@/lib/recurrence";
 
 export interface Installment {
   id: string;
@@ -11,6 +12,7 @@ export interface Installment {
   due_date: string;
   paid_at?: string;
   status: "pending" | "paid" | "overdue";
+  recurrence?: Recurrence;
   created_at: string;
   updated_at: string;
 }

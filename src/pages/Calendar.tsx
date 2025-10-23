@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, getDay, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, FileText, Landmark, Repeat, Star, AlertTriangle, Receipt, CreditCard } from "lucide-react";
-import { useObligations, Obligation } from "@/hooks/useObligations";
-import { useInstallments, Installment } from "@/hooks/useInstallments";
-import { useTaxes, Tax } from "@/hooks/useTaxes";
-import { holidays } from "@/lib/holidays";
-import { generateRecurrencesForPeriod, RecurrableItem } from "@/lib/recurrence";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle } from "lucide-react";
+import { useObligations } from "@/hooks/useObligations";
+import { useInstallments } from "@/hooks/useInstallments";
+import { useTaxes } from "@/hooks/useTaxes";
 
 const statusColors = {
   pending: "bg-pending/10 text-pending border-pending/30",
@@ -24,13 +22,6 @@ const typeColors = {
   installment: "border-l-4 border-l-green-500",
 };
 
-type CalendarItem = (Obligation | Tax | Installment) & {
-  type: 'obligation' | 'tax' | 'installment';
-  isRecurrence?: boolean;
-  title?: string;
-  client?: { name: string } | null;
-};
-
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
@@ -40,45 +31,12 @@ export default function Calendar() {
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const startDate = startOfWeek(monthStart);
-  const endDate = endOfWeek(monthEnd);
-  const days = eachDayOfInterval({ start: startDate, end: endDate });
+  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const holidaysMap = holidays.reduce((acc, holiday) => {
-    acc[holiday.date] = holiday.name;
-    return acc;
-  }, {} as Record<string, string>);
-
-  const recurringItems = [...obligations, ...taxes].filter(item => item.recurrence && item.recurrence.type !== 'none');
-  const nonRecurringItems = [
-    ...obligations.filter(o => !o.recurrence || o.recurrence.type === 'none'),
-    ...taxes.filter(t => !t.recurrence || t.recurrence.type === 'none'),
-  ];
-
-  const recurrences = recurringItems.flatMap((item: RecurrableItem) =>
-    generateRecurrencesForPeriod(item, startDate, endDate)
-  );
-
-  const allItems: CalendarItem[] = [
-    ...nonRecurringItems.map((item): CalendarItem => ({
-      ...item,
-      type: 'tax_type_name' in item ? 'tax' : 'obligation',
-    })),
-    ...installments.map((i): CalendarItem => ({ ...i, type: 'installment' })),
-    ...recurrences.map(r => {
-      const parent = recurringItems.find(item => item.id === r.parentId);
-      if (!parent) return null;
-
-      const type = 'tax_type_name' in parent ? 'tax' : 'obligation';
-
-      return {
-        ...parent,
-        type,
-        due_date: r.date,
-        isRecurrence: true,
-        id: `rec-${parent.id}-${r.date}` // Prefixo para garantir unicidade
-      };
-    }).filter((item): item is CalendarItem => item !== null)
+  const allItems = [
+    ...obligations.map((o: any) => ({ ...o, type: 'obligation' })),
+    ...taxes.map((t: any) => ({ ...t, type: 'tax' })),
+    ...installments.map((i: any) => ({ ...i, type: 'installment' })),
   ];
 
   const filteredItems = allItems.filter(item => {
@@ -89,26 +47,36 @@ export default function Calendar() {
     return true;
   });
 
-  const itemsByDate = filteredItems.reduce((acc: Record<string, CalendarItem[]>, item: CalendarItem) => {
+  const itemsByDate = filteredItems.reduce((acc: any, item: any) => {
     const dueDate = item.due_date;
     if (!dueDate) return acc;
 
     if (!acc[dueDate]) {
       acc[dueDate] = [];
     }
-    
+
     let title = "";
-    const client = null; // Simplificado por enquanto
+    let client = null;
 
     if (item.type === 'installment') {
-      title = `Parcela ${(item as Installment).installment_number}/${(item as Installment).total_installments}`;
+      title = `Parcela ${item.installment_number}/${item.total_installments}`;
+      if (item.obligation?.title) title += ` - ${item.obligation.title}`;
+      client = item.obligation?.clients;
     } else if (item.type === 'tax') {
-      title = (item as Tax).tax_type_name;
+      title = item.tax_type_name;
+      client = item.clients;
     } else {
-      title = (item as Obligation).title;
+      title = item.title;
+      client = item.clients;
     }
 
-    acc[dueDate].push({ ...item, title, client });
+    acc[dueDate].push({
+      id: item.id,
+      title,
+      status: item.status,
+      client,
+      type: item.type,
+    });
 
     return acc;
   }, {});
@@ -124,27 +92,24 @@ export default function Calendar() {
         </div>
       </div>
 
+      {/* Legendas e Filtros */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium">Obrigações</span>
+            <div className="w-3 h-3 rounded bg-blue-500" />
+            <span className="text-sm font-normal">Obrigações</span>
           </div>
           <div className="flex items-center gap-2">
-            <Landmark className="h-4 w-4 text-purple-500" />
-            <span className="text-sm font-medium">Impostos</span>
+            <div className="w-3 h-3 rounded bg-purple-500" />
+            <span className="text-sm font-normal">Impostos</span>
           </div>
           <div className="flex items-center gap-2">
-            <Repeat className="h-4 w-4 text-green-500" />
-            <span className="text-sm font-medium">Parcelamentos</span>
+            <div className="w-3 h-3 rounded bg-green-500" />
+            <span className="text-sm font-normal">Parcelamentos</span>
           </div>
           <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-medium">Feriado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-warning" />
-            <span className="text-sm font-medium">Final de Semana</span>
+            <AlertTriangle className="h-3 w-3 text-warning" />
+            <span className="text-sm font-normal">Final de Semana</span>
           </div>
         </div>
 
@@ -221,29 +186,22 @@ export default function Calendar() {
               </div>
             ))}
 
-            {days.map((day) => {
+            {days.map((day, index) => {
               const dayStr = format(day, "yyyy-MM-dd");
               const items = itemsByDate[dayStr] || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
               const isCurrentDay = isToday(day);
               const dayOfWeek = getDay(day);
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-              const isHoliday = holidaysMap[dayStr];
 
               return (
                 <div
-                  key={dayStr}
-                  role="gridcell"
-                  aria-label={`
-                    ${format(day, "d 'de' MMMM", { locale: ptBR })},
-                    ${isHoliday ? isHoliday : ''},
-                    ${isWeekend ? 'Fim de semana' : 'Dia de semana'}
-                  `}
+                  key={index}
                   className={`min-h-[120px] bg-card p-2 transition-colors hover:bg-accent/5 ${
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
                     isWeekend ? "bg-muted/30" : ""
-                  } ${isHoliday ? "bg-success/10" : ""}`}
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span
@@ -255,22 +213,13 @@ export default function Calendar() {
                     >
                       {format(day, "d")}
                     </span>
-                    {isHoliday ? (
-                      <Star className="h-4 w-4 text-yellow-500" />
-                    ) : (
-                      isWeekend && items.length > 0 && (
-                        <AlertTriangle className="h-4 w-4 text-warning" />
-                      )
+                    {isWeekend && items.length > 0 && (
+                      <AlertTriangle className="h-3 w-3 text-warning" />
                     )}
                   </div>
 
                   <div className="space-y-1">
-                    {isHoliday && (
-                      <div className="text-xs text-yellow-600 font-medium truncate">
-                        {isHoliday}
-                      </div>
-                    )}
-                    {items.slice(0, 3).map((item: CalendarItem) => (
+                    {items.slice(0, 3).map((item: any) => (
                       <div
                         key={item.id}
                         className={`text-xs p-1.5 rounded border ${
@@ -280,9 +229,9 @@ export default function Calendar() {
                         } truncate`}
                       >
                         <div className="font-normal flex items-center gap-1">
-                          {item.type === 'obligation' && <FileText className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'tax' && <Landmark className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'installment' && <Repeat className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
+                          {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
                           {item.title}
                         </div>
                         {item.client && (

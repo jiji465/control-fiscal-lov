@@ -1,105 +1,84 @@
-// src/lib/recurrence.ts
+import { addMonths, addQuarters, isWeekend, nextMonday, lastDayOfMonth } from 'date-fns';
 
-import { addDays, addMonths, addQuarters, isWeekend, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDate } from 'date-fns';
-import { holidays } from './holidays';
+export type Recurrence = {
+  type: 'monthly' | 'quarterly' | 'custom';
+  endDate: string;
+  dayOfMonth: number;
+  months?: number; // For custom recurrence
+};
 
-// Interfaces para a configuração de recorrência
-export interface RecurrenceRule {
-  type: 'monthly' | 'quarterly' | 'custom_days' | 'daily_interval';
-  interval?: number; // Para 'monthly' e 'daily_interval'
-  days?: number[];   // Para 'custom_days' (ex: dias 15 e 30)
-}
-
-// Interface para um item que pode ser recorrente
-export interface RecurrableItem {
+export type CalendarItem = {
   id: string;
-  due_date: string; // Formato YYYY-MM-DD (data de início da recorrência)
-  recurrence?: RecurrenceRule;
-  weekend_handling?: 'postpone';
-}
+  title: string;
+  date: string;
+  type: 'obligation' | 'tax' | 'holiday' | 'installment';
+  recurrence?: Recurrence;
+  amount?: number;
+};
 
-const holidaysSet = new Set(holidays.map(h => h.date));
-
-/**
- * Verifica se uma data é um feriado.
- */
-function isHoliday(date: Date): boolean {
-  const dateStr = date.toISOString().split('T')[0];
-  return holidaysSet.has(dateStr);
-}
-
-/**
- * Ajusta uma data para o próximo dia útil.
- */
-function adjustToNextBusinessDay(date: Date): Date {
-  let adjustedDate = new Date(date);
-  while (isWeekend(adjustedDate) || isHoliday(adjustedDate)) {
-    adjustedDate = addDays(adjustedDate, 1);
+const adjustForWeekend = (date: Date): Date => {
+  if (isWeekend(date)) {
+    return nextMonday(date);
   }
-  return adjustedDate;
-}
+  return date;
+};
 
-/**
- * Gera as ocorrências de um item recorrente para um intervalo de datas (normalmente um mês).
- */
-export function generateRecurrencesForPeriod(
-  item: RecurrableItem,
-  periodStart: Date,
-  periodEnd: Date
-): { date: string; parentId: string }[] {
-  if (!item.recurrence) return [];
+export const generateRecurrences = (item: CalendarItem, visibleStartDate: Date, visibleEndDate: Date): CalendarItem[] => {
+  if (!item.recurrence) {
+    return [];
+  }
 
-  const occurrences: Date[] = [];
-  const initialDueDate = parseISO(item.due_date);
+  const occurrences: CalendarItem[] = [];
+  const { type, endDate, dayOfMonth } = item.recurrence;
+  let currentDate = new Date(item.date);
+  const finalDate = new Date(endDate);
 
-  switch (item.recurrence.type) {
-    case 'monthly': {
-      let currentDate = initialDueDate;
-      while (currentDate <= periodEnd) {
-        if (currentDate >= periodStart) {
-          occurrences.push(new Date(currentDate));
-        }
-        currentDate = addMonths(currentDate, item.recurrence.interval || 1);
+  while (currentDate <= finalDate && currentDate <= visibleEndDate) {
+    if (currentDate >= visibleStartDate) {
+      let occurrenceDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayOfMonth);
+
+      // Handle last day of month logic
+      if (dayOfMonth === 31) {
+        occurrenceDate = lastDayOfMonth(currentDate);
+      } else {
+        occurrenceDate.setDate(dayOfMonth);
       }
-      break;
-    }
-    case 'quarterly': {
-      let quarterlyDate = initialDueDate;
-      while (quarterlyDate <= periodEnd) {
-        if (quarterlyDate >= periodStart) {
-          occurrences.push(new Date(quarterlyDate));
-        }
-        quarterlyDate = addQuarters(quarterlyDate, 1);
+
+      const adjustedDate = adjustForWeekend(occurrenceDate);
+
+      if (adjustedDate >= visibleStartDate && adjustedDate <= visibleEndDate) {
+          occurrences.push({
+              ...item,
+              id: `${item.id}-${currentDate.toISOString().split('T')[0]}`,
+              date: adjustedDate.toISOString().split('T')[0],
+              // Make it clear this is a generated instance
+              title: `${item.title} (Recorrência)`,
+          });
       }
-      break;
     }
-    case 'daily_interval': {
-        let dailyDate = initialDueDate;
-        while(dailyDate <= periodEnd) {
-            if (dailyDate >= periodStart) {
-                occurrences.push(new Date(dailyDate));
-            }
-            dailyDate = addDays(dailyDate, item.recurrence.interval || 1);
+
+    // Move to the next period
+    switch (type) {
+      case 'monthly':
+        currentDate = addMonths(currentDate, 1);
+        break;
+      case 'quarterly':
+        currentDate = addQuarters(currentDate, 1);
+        break;
+      case 'custom':
+        if (item.recurrence.months) {
+          currentDate = addMonths(currentDate, item.recurrence.months);
+        } else {
+          // If custom months is not defined, break the loop to avoid infinite loop.
+          currentDate = new Date(finalDate.getTime() + 1);
         }
         break;
-    }
-    case 'custom_days': {
-      const daysInPeriod = eachDayOfInterval({ start: periodStart, end: periodEnd });
-      daysInPeriod.forEach(day => {
-        if (item.recurrence?.days?.includes(getDate(day))) {
-          occurrences.push(day);
-        }
-      });
-      break;
+      default:
+         // Break the loop if recurrence type is unknown
+        currentDate = new Date(finalDate.getTime() + 1);
+        break;
     }
   }
 
-  // Ajusta as datas se necessário e formata a saída
-  return occurrences.map(d => {
-    const finalDate = item.weekend_handling === 'postpone' ? adjustToNextBusinessDay(d) : d;
-    return {
-      date: finalDate.toISOString().split('T')[0],
-      parentId: item.id,
-    };
-  });
-}
+  return occurrences;
+};
