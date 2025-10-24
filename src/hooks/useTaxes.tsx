@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Recurrence } from "@/lib/recurrence";
 
 export interface Tax {
   id: string;
@@ -13,7 +12,7 @@ export interface Tax {
   due_date: string;
   paid_at?: string;
   status: "pending" | "paid" | "overdue";
-  recurrence?: Recurrence;
+  recurrence: "none" | "monthly" | "quarterly" | "semiannual" | "annual";
   responsible?: string;
   notes?: string;
   weekend_handling: "advance" | "postpone" | "next_business_day";
