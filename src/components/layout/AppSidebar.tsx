@@ -13,6 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -51,11 +52,12 @@ export function AppSidebar() {
 
       <SidebarContent>
         {state !== "collapsed" && (
-          <div className="p-4">
-            <div className="relative">
+          <div className="p-4 flex items-center gap-2">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar..." className="pl-9" />
             </div>
+            <NotificationBell />
           </div>
         )}
         <SidebarGroup>

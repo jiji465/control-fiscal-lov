@@ -7,13 +7,14 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCar
 import { useObligations } from "@/hooks/useObligations";
 import { useInstallments } from "@/hooks/useInstallments";
 import { useTaxes } from "@/hooks/useTaxes";
+import { holidays } from "@/lib/holidays";
 
 const statusColors = {
-  pending: "bg-pending/10 text-pending border-pending/30",
-  in_progress: "bg-primary/10 text-primary border-primary/30",
-  completed: "bg-success/10 text-success border-success/30",
-  overdue: "bg-destructive/10 text-destructive border-destructive/30",
-  paid: "bg-success/10 text-success border-success/30",
+  pending: "bg-amber-100 text-amber-900 border-amber-200",
+  in_progress: "bg-blue-100 text-blue-900 border-blue-200",
+  completed: "bg-green-100 text-green-900 border-green-200",
+  overdue: "bg-red-100 text-red-900 border-red-200",
+  paid: "bg-green-100 text-green-900 border-green-200",
 };
 
 const typeColors = {
@@ -196,6 +197,7 @@ export default function Calendar() {
               const isCurrentDay = isToday(day);
               const dayOfWeek = getDay(day);
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              const holiday = holidays.find(h => isSameDay(new Date(h.date), day));
 
               return (
                 <div
@@ -203,8 +205,8 @@ export default function Calendar() {
                   className={`min-h-[120px] bg-card p-2 transition-colors hover:bg-accent/5 ${
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
-                    isWeekend ? "bg-muted/30" : ""
-                  }`}
+                    isWeekend ? "bg-muted/50" : ""
+                  } ${holiday ? "bg-yellow-100" : ""}`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span
@@ -216,7 +218,10 @@ export default function Calendar() {
                     >
                       {format(day, "d")}
                     </span>
-                    {isWeekend && items.length > 0 && (
+                    {holiday && (
+                      <span className="text-xs font-semibold text-yellow-800">Feriado</span>
+                    )}
+                    {isWeekend && items.length > 0 && !holiday && (
                       <AlertTriangle className="h-3 w-3 text-warning" />
                     )}
                   </div>
