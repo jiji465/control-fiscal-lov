@@ -47,9 +47,40 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_recurrence_rules: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          rule_config: Json | null
+          rule_type: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          rule_config?: Json | null
+          rule_type: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          rule_config?: Json | null
+          rule_type?: string
+        }
+        Relationships: []
+      }
       installments: {
         Row: {
           amount: number
+          auto_created: boolean | null
           created_at: string
           due_date: string
           id: string
@@ -57,6 +88,7 @@ export type Database = {
           obligation_id: string
           original_due_date: string | null
           paid_at: string | null
+          parent_id: string | null
           status: string
           total_installments: number
           updated_at: string
@@ -64,6 +96,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          auto_created?: boolean | null
           created_at?: string
           due_date: string
           id?: string
@@ -71,6 +104,7 @@ export type Database = {
           obligation_id: string
           original_due_date?: string | null
           paid_at?: string | null
+          parent_id?: string | null
           status?: string
           total_installments: number
           updated_at?: string
@@ -78,6 +112,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_created?: boolean | null
           created_at?: string
           due_date?: string
           id?: string
@@ -85,6 +120,7 @@ export type Database = {
           obligation_id?: string
           original_due_date?: string | null
           paid_at?: string | null
+          parent_id?: string | null
           status?: string
           total_installments?: number
           updated_at?: string
@@ -103,6 +139,7 @@ export type Database = {
       obligations: {
         Row: {
           amount: number | null
+          auto_created: boolean | null
           client_id: string
           completed_at: string | null
           created_at: string
@@ -111,6 +148,7 @@ export type Database = {
           id: string
           notes: string | null
           original_due_date: string | null
+          parent_id: string | null
           recurrence: Database["public"]["Enums"]["recurrence_type"]
           responsible: string | null
           status: Database["public"]["Enums"]["obligation_status"]
@@ -122,6 +160,7 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          auto_created?: boolean | null
           client_id: string
           completed_at?: string | null
           created_at?: string
@@ -130,6 +169,7 @@ export type Database = {
           id?: string
           notes?: string | null
           original_due_date?: string | null
+          parent_id?: string | null
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
@@ -141,6 +181,7 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          auto_created?: boolean | null
           client_id?: string
           completed_at?: string | null
           created_at?: string
@@ -149,6 +190,7 @@ export type Database = {
           id?: string
           notes?: string | null
           original_due_date?: string | null
+          parent_id?: string | null
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
@@ -174,6 +216,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recurrence_history: {
+        Row: {
+          created_at: string | null
+          created_by_system: boolean | null
+          creation_date: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          original_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_system?: boolean | null
+          creation_date?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          original_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by_system?: boolean | null
+          creation_date?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          original_id?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          auto_create_recurrences: boolean | null
+          created_at: string | null
+          default_weekend_handling: string | null
+          id: string
+          notification_days_before: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auto_create_recurrences?: boolean | null
+          created_at?: string | null
+          default_weekend_handling?: string | null
+          id?: string
+          notification_days_before?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auto_create_recurrences?: boolean | null
+          created_at?: string | null
+          default_weekend_handling?: string | null
+          id?: string
+          notification_days_before?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       tax_types: {
         Row: {
@@ -202,6 +304,7 @@ export type Database = {
       taxes: {
         Row: {
           amount: number | null
+          auto_created: boolean | null
           client_id: string
           created_at: string
           description: string | null
@@ -210,6 +313,7 @@ export type Database = {
           notes: string | null
           original_due_date: string | null
           paid_at: string | null
+          parent_id: string | null
           recurrence: string
           responsible: string | null
           status: string
@@ -220,6 +324,7 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          auto_created?: boolean | null
           client_id: string
           created_at?: string
           description?: string | null
@@ -228,6 +333,7 @@ export type Database = {
           notes?: string | null
           original_due_date?: string | null
           paid_at?: string | null
+          parent_id?: string | null
           recurrence?: string
           responsible?: string | null
           status?: string
@@ -238,6 +344,7 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          auto_created?: boolean | null
           client_id?: string
           created_at?: string
           description?: string | null
@@ -246,6 +353,7 @@ export type Database = {
           notes?: string | null
           original_due_date?: string | null
           paid_at?: string | null
+          parent_id?: string | null
           recurrence?: string
           responsible?: string | null
           status?: string
