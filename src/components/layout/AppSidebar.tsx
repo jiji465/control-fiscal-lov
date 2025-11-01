@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, Calendar, CreditCard, Receipt, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Calendar, CreditCard, Receipt, BarChart3, Search, Bell } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -12,6 +12,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Input } from "@/components/ui/input";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -21,6 +23,7 @@ const menuItems = [
   { title: "Clientes", url: "/clients", icon: Users },
   { title: "Agenda", url: "/calendar", icon: Calendar },
   { title: "Análises", url: "/analytics", icon: BarChart3 },
+  { title: "Notificações", url: "/notifications", icon: Bell },
 ];
 
 export function AppSidebar() {
@@ -48,6 +51,15 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent>
+        {state !== "collapsed" && (
+          <div className="p-4 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar..." className="pl-9" />
+            </div>
+            <NotificationBell />
+          </div>
+        )}
         <SidebarGroup>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
