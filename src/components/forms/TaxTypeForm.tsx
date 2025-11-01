@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,9 +38,6 @@ export function TaxTypeForm() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Novo Tipo de Imposto</DialogTitle>
-          <DialogDescription>
-            {taxType ? "Atualize as informações do tipo de imposto abaixo." : "Preencha as informações do novo tipo de imposto abaixo."}
-          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
