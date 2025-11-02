@@ -5,7 +5,7 @@ import { Obligation } from "@/hooks/useObligations";
 import { useInstallments } from "@/hooks/useInstallments";
 import { format, isWeekend, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Building2, User, Repeat, DollarSign, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Building2, User, Repeat, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface ObligationDetailsProps {
   obligation: Obligation & { 

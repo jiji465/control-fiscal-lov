@@ -52,7 +52,13 @@ All colors MUST be HSL.
     
     /* Pending - Blue */
     --pending: 217 91% 60%;
-    --pending-foreground: 0 0% 100%;
+    --pending-foreground: 217 91% 60%;
+
+    /* Dark Text Colors */
+    --primary-dark-foreground: 217 91% 60%;
+    --success-dark-foreground: 142 71% 45%;
+    --warning-dark-foreground: 38 92% 50%;
+    --destructive-dark-foreground: 0 84% 60%;
     
     /* Border - Ultra sutil */
     --border: 214 32% 91%;

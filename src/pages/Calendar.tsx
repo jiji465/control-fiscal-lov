@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfMonth, endOfMonth, isSameMonth, isToday, addMonths, subMonths, getDay, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,14 @@ import {
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WeekendBadge } from "@/components/shared/WeekendBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Link } from "react-router-dom";
 
 const statusColors = {
-  pending: "bg-pending/10 text-pending-foreground border-pending/30",
-  in_progress: "bg-primary/10 text-primary-foreground border-primary/30",
-  completed: "bg-success/10 text-success-foreground border-success/30",
-  overdue: "bg-destructive/10 text-destructive-foreground border-destructive/30",
-  paid: "bg-success/10 text-success-foreground border-success/30",
+  pending: "bg-pending/10 text-pending-dark-foreground border-pending/30",
+  in_progress: "bg-primary/10 text-primary-dark-foreground border-primary/30",
+  completed: "bg-success/10 text-success-dark-foreground border-success/30",
+  overdue: "bg-destructive/10 text-destructive-dark-foreground border-destructive/30",
+  paid: "bg-success/10 text-success-dark-foreground border-success/30",
 };
 
 const typeColors = {
@@ -38,18 +39,12 @@ export default function Calendar() {
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
+  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
   const [selectedDayItems, setSelectedDayItems] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { obligations } = useObligations();
   const { installments } = useInstallments();
   const { taxes } = useTaxes();
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({
-    start: startOfWeek(monthStart, { locale: ptBR }),
-    end: endOfWeek(monthEnd, { locale: ptBR }),
-  });
 
   const allItems = [
     ...obligations.map((o: any) => ({ ...o, type: 'obligation' })),
@@ -97,6 +92,29 @@ export default function Calendar() {
     return acc;
   }, {});
 
+  const generateCalendarGrid = () => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const startDate = startOfWeek(monthStart, { locale: ptBR });
+    const endDate = endOfWeek(monthEnd, { locale: ptBR });
+
+    const weeks = [];
+    let days = [];
+    let day = startDate;
+
+    while (day <= endDate) {
+      for (let i = 0; i < 7; i++) {
+        days.push(day);
+        day = addDays(day, 1);
+      }
+      weeks.push(days);
+      days = [];
+    }
+    return weeks;
+  };
+
+  const calendarWeeks = generateCalendarGrid();
+
   // Contadores para legendas
   const obligationCount = filteredItems.filter(i => i.type === 'obligation').length;
   const taxCount = filteredItems.filter(i => i.type === 'tax').length;
@@ -112,6 +130,9 @@ export default function Calendar() {
       setSelectedDayItems(items);
       setSelectedDate(day);
       setIsDayModalOpen(true);
+    } else {
+      setSelectedDate(day);
+      setIsNewItemModalOpen(true);
     }
   };
 
@@ -262,74 +283,76 @@ export default function Calendar() {
               </div>
             ))}
 
-            {days.map((day) => {
-              const dayStr = format(day, "yyyy-MM-dd");
-              const items = itemsByDate[dayStr] || [];
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              const isCurrentDay = isToday(day);
-              const dayOfWeek = getDay(day);
-              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            {calendarWeeks.map((week, weekIndex) =>
+              week.map((day) => {
+                const dayStr = format(day, "yyyy-MM-dd");
+                const items = itemsByDate[dayStr] || [];
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                const isCurrentDay = isToday(day);
+                const dayOfWeek = getDay(day);
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-              return (
-                <div
-                  key={day.toISOString()}
-                  onClick={() => handleDayClick(day, items)}
-                  className={`min-h-[120px] bg-card p-2 transition-all hover:bg-accent/10 cursor-pointer ${
-                    !isCurrentMonth ? "opacity-40" : ""
-                  } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
-                    isWeekend ? "bg-muted/20" : ""
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span
-                      className={`text-sm ${
-                        isCurrentDay
-                          ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-semibold"
-                          : "font-normal text-foreground"
-                      } ${isWeekend && !isCurrentDay ? "text-muted-foreground" : ""}`}
-                    >
-                      {format(day, "d")}
-                    </span>
-                    {isWeekend && items.length > 0 && (
-                      <AlertTriangle className="h-3 w-3 text-warning" />
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    {items.slice(0, 3).map((item: any) => (
-                      <div
-                        key={item.id}
-                        className={`w-full text-left text-xs p-1.5 rounded border ${
-                          statusColors[item.status as keyof typeof statusColors]
-                        } ${
-                          typeColors[item.type as keyof typeof typeColors]
-                        } truncate hover:shadow-md transition-all`}
+                return (
+                  <div
+                    key={day.toISOString()}
+                    onClick={() => handleDayClick(day, items)}
+                    className={`min-h-[120px] bg-card p-2 transition-all hover:bg-accent/10 cursor-pointer ${
+                      !isCurrentMonth ? "opacity-40" : ""
+                    } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
+                      isWeekend ? "bg-muted/20" : ""
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span
+                        className={`text-sm ${
+                          isCurrentDay
+                            ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-semibold"
+                            : "font-normal text-foreground"
+                        } ${isWeekend && !isCurrentDay ? "text-muted-foreground" : ""}`}
                       >
-                        <div className="font-medium flex items-center gap-1">
-                          {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
-                          {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
-                          {item.displayTitle}
-                        </div>
-                        {item.displayClient && (
-                          <div className="text-xs opacity-75 truncate mt-0.5">
-                            {item.displayClient.name}
+                        {format(day, "d")}
+                      </span>
+                      {isWeekend && items.length > 0 && (
+                        <AlertTriangle className="h-3 w-3 text-warning" />
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      {items.slice(0, 3).map((item: any) => (
+                        <div
+                          key={item.id}
+                          className={`w-full text-left text-xs p-1.5 rounded border ${
+                            statusColors[item.status as keyof typeof statusColors]
+                          } ${
+                            typeColors[item.type as keyof typeof typeColors]
+                          } truncate hover:shadow-md transition-all`}
+                        >
+                          <div className="font-medium flex items-center gap-1">
+                            {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
+                            {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
+                            {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
+                            {item.displayTitle}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                    {items.length > 3 && (
-                      <div
-                        key="show-more"
-                        className="w-full text-xs text-muted-foreground text-center font-medium hover:text-foreground transition-colors"
-                      >
-                        +{items.length - 3} mais
-                      </div>
-                    )}
+                          {item.displayClient && (
+                            <div className="text-xs opacity-75 truncate mt-0.5">
+                              {item.displayClient.name}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {items.length > 3 && (
+                        <div
+                          key="show-more"
+                          className="w-full text-xs text-muted-foreground text-center font-medium hover:text-foreground transition-colors"
+                        >
+                          +{items.length - 3} mais
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>
@@ -424,7 +447,7 @@ export default function Calendar() {
               {selectedDayItems.length} itens encontrados para esta data.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
+          <ScrollArea className="max-h-[60vh] -mr-4 pr-5">
             <div className="space-y-4 py-4">
               {Object.entries(groupedDayItems).map(([type, items]) => (
                 <div key={type}>
@@ -464,6 +487,34 @@ export default function Calendar() {
               ))}
             </div>
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Novo Item */}
+      <Dialog open={isNewItemModalOpen} onOpenChange={setIsNewItemModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Criar novo item para {selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ''}
+            </DialogTitle>
+            <DialogDescription>
+              Selecione o tipo de item que deseja criar para esta data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+            <Link to={`/obrigações/novo?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
+              <CalendarIcon className="h-8 w-8 mx-auto text-primary mb-2" />
+              <p className="font-semibold text-sm">Obrigação</p>
+            </Link>
+            <Link to={`/impostos/novo?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
+              <Receipt className="h-8 w-8 mx-auto text-[hsl(var(--chart-2))] mb-2" />
+              <p className="font-semibold text-sm">Imposto</p>
+            </Link>
+            <Link to={`/parcelamentos/novo?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
+              <CreditCard className="h-8 w-8 mx-auto text-success mb-2" />
+              <p className="font-semibold text-sm">Parcelamento</p>
+            </Link>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

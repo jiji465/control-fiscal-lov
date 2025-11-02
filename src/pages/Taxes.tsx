@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, DollarSign, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Search, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { TaxForm } from "@/components/forms/TaxForm";
 import { TaxEditForm } from "@/components/forms/TaxEditForm";
 import { TaxCard } from "@/components/taxes/TaxCard";
@@ -90,7 +90,6 @@ export default function Taxes() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
