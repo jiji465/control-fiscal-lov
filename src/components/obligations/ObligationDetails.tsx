@@ -117,18 +117,6 @@ export function ObligationDetails({ obligation, open, onOpenChange }: Obligation
               </div>
             )}
 
-            {obligation.amount && (
-              <div className="flex items-start gap-3">
-                <DollarSign className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Valor</p>
-                  <p className="text-sm text-muted-foreground">
-                    R$ {parseFloat(obligation.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            )}
-
             {obligation.tax_types && (
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -174,9 +162,6 @@ export function ObligationDetails({ obligation, open, onOpenChange }: Obligation
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium">
-                          R$ {parseFloat(installment.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
                         <Badge variant={installmentStatusConfig[installment.status].variant}>
                           {installmentStatusConfig[installment.status].label}
                         </Badge>

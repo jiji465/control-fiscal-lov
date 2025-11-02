@@ -79,7 +79,6 @@ export type Database = {
       }
       installments: {
         Row: {
-          amount: number
           auto_created: boolean | null
           created_at: string
           due_date: string
@@ -95,7 +94,6 @@ export type Database = {
           weekend_handling: string | null
         }
         Insert: {
-          amount: number
           auto_created?: boolean | null
           created_at?: string
           due_date: string
@@ -111,7 +109,6 @@ export type Database = {
           weekend_handling?: string | null
         }
         Update: {
-          amount?: number
           auto_created?: boolean | null
           created_at?: string
           due_date?: string
@@ -138,7 +135,6 @@ export type Database = {
       }
       obligations: {
         Row: {
-          amount: number | null
           auto_created: boolean | null
           client_id: string
           completed_at: string | null
@@ -159,7 +155,6 @@ export type Database = {
           weekend_handling: string | null
         }
         Insert: {
-          amount?: number | null
           auto_created?: boolean | null
           client_id: string
           completed_at?: string | null
@@ -180,7 +175,6 @@ export type Database = {
           weekend_handling?: string | null
         }
         Update: {
-          amount?: number | null
           auto_created?: boolean | null
           client_id?: string
           completed_at?: string | null
@@ -303,7 +297,6 @@ export type Database = {
       }
       taxes: {
         Row: {
-          amount: number | null
           auto_created: boolean | null
           client_id: string
           created_at: string
@@ -323,7 +316,6 @@ export type Database = {
           weekend_handling: string | null
         }
         Insert: {
-          amount?: number | null
           auto_created?: boolean | null
           client_id: string
           created_at?: string
@@ -343,7 +335,6 @@ export type Database = {
           weekend_handling?: string | null
         }
         Update: {
-          amount?: number | null
           auto_created?: boolean | null
           client_id?: string
           created_at?: string

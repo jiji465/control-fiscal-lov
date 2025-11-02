@@ -17,10 +17,10 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
   const dueDate = parseISO(tax.due_date);
   const isOverdue = isPast(dueDate) && tax.status === "pending";
 
-  const handleMarkAsPaid = async () => {
+  const handleMarkAsCompleted = async () => {
     await updateTax.mutateAsync({
       id: tax.id,
-      status: "paid",
+      status: "completed",
       paid_at: new Date().toISOString(),
     });
   };
@@ -64,15 +64,6 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {tax.amount && (
-          <div className="text-2xl font-bold text-primary">
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(tax.amount)}
-          </div>
-        )}
-
         <div className="space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Vencimento:</span>
@@ -119,12 +110,12 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
             <Button
               size="sm"
               variant="default"
-              onClick={handleMarkAsPaid}
+              onClick={handleMarkAsCompleted}
               className="flex-1"
               disabled={updateTax.isPending}
             >
               <CheckCircle2 className="h-4 w-4 mr-1" />
-              Marcar como Pago
+              Marcar como Concluído
             </Button>
           ) : (
             <Button

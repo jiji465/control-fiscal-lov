@@ -38,7 +38,6 @@ const formSchema = z.object({
   client_id: z.string().min(1, "Cliente é obrigatório"),
   tax_type_name: z.string().min(1, "Tipo de imposto é obrigatório"),
   description: z.string().optional(),
-  amount: z.number().min(0, "Valor deve ser positivo").optional(),
   due_date: z.date(),
   recurrence: z.enum(["none", "monthly", "quarterly", "semiannual", "annual"]),
   weekend_handling: z.enum(["advance", "postpone", "next_business_day"]),
@@ -63,7 +62,6 @@ export function TaxEditForm({ tax, open, onOpenChange, onSuccess, onUpdate }: Ta
       client_id: tax.client_id || "",
       tax_type_name: tax.tax_type_name || "",
       description: tax.description || "",
-      amount: tax.amount || undefined,
       due_date: new Date(tax.due_date),
       recurrence: tax.recurrence || "none",
       weekend_handling: tax.weekend_handling || "next_business_day",
@@ -158,27 +156,6 @@ export function TaxEditForm({ tax, open, onOpenChange, onSuccess, onUpdate }: Ta
               <FormLabel>Descrição</FormLabel>
               <FormControl>
                 <Input placeholder="Descrição do imposto" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valor (Opcional)</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  step="0.01" 
-                  placeholder="0.00"
-                  {...field}
-                  value={field.value || ""}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                />
               </FormControl>
               <FormMessage />
             </FormItem>

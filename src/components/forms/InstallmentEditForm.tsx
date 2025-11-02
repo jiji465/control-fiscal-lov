@@ -38,7 +38,6 @@ const formSchema = z.object({
   client_id: z.string().min(1, "Cliente é obrigatório"),
   installment_number: z.number().min(1, "Número da parcela deve ser maior que 0"),
   total_installments: z.number().min(1, "Total de parcelas deve ser maior que 0"),
-  amount: z.number().min(0, "Valor deve ser positivo"),
   due_date: z.date(),
   weekend_handling: z.enum(["advance", "postpone", "next_business_day"]),
   notes: z.string().optional(),
@@ -61,7 +60,6 @@ export function InstallmentEditForm({ installment, open, onOpenChange, onSuccess
       client_id: installment.obligation_id || "",
       installment_number: installment.installment_number || 1,
       total_installments: installment.total_installments || 1,
-      amount: installment.amount || 0,
       due_date: new Date(installment.due_date),
       weekend_handling: installment.weekend_handling || "next_business_day",
       notes: installment.notes || "",
@@ -169,26 +167,6 @@ export function InstallmentEditForm({ installment, open, onOpenChange, onSuccess
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valor</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  step="0.01" 
-                  placeholder="0.00"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}

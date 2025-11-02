@@ -375,15 +375,6 @@ export default function Calendar() {
                   </div>
                 )}
 
-                {selectedItem.amount && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Valor</p>
-                    <p className="text-lg font-bold text-primary">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedItem.amount)}
-                    </p>
-                  </div>
-                )}
-
                 {selectedItem.description && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Descrição</p>

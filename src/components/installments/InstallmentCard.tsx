@@ -16,7 +16,8 @@ interface InstallmentCardProps {
 
 const statusConfig = {
   pending: { label: "Pendente", variant: "secondary" as const },
-  paid: { label: "Pago", variant: "default" as const },
+  completed: { label: "Concluído", variant: "default" as const },
+  paid: { label: "Concluído", variant: "default" as const },
   overdue: { label: "Atrasado", variant: "destructive" as const },
 };
 
@@ -29,12 +30,12 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
   const isWeekendDue = isWeekend(new Date(installment.due_date));
   const isOverdue = isPast(new Date(installment.due_date)) && installment.status === "pending";
 
-  const handleStatusChange = async (newStatus: "pending" | "paid" | "overdue") => {
+  const handleStatusChange = async (newStatus: "pending" | "completed" | "overdue") => {
     try {
       await updateInstallment.mutateAsync({
         id: installment.id,
         status: newStatus,
-        paid_at: newStatus === "paid" ? new Date().toISOString() : null,
+        paid_at: newStatus === "completed" ? new Date().toISOString() : null,
       });
     } catch (error) {
       toast({
@@ -99,13 +100,6 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">
-              R$ {parseFloat(installment.amount.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
           {installment.paid_at && (
             <div className="flex items-center gap-2 text-sm text-success">
               <CheckCircle2 className="h-4 w-4" />
@@ -129,13 +123,13 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
               variant="default" 
               size="sm" 
               className="flex-1"
-              onClick={() => handleStatusChange("paid")}
+              onClick={() => handleStatusChange("completed")}
               disabled={updateInstallment.isPending}
             >
-              Marcar como Pago
+              Marcar como Concluído
             </Button>
           )}
-          {installment.status === "paid" && (
+          {(installment.status === "paid" || installment.status === "completed") && (
             <Button 
               variant="outline" 
               size="sm" 

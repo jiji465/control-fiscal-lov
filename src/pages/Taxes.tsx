@@ -46,11 +46,8 @@ export default function Taxes() {
   const stats = {
     total: taxes.length,
     pending: taxes.filter((t) => t.status === "pending" && !isPast(parseISO(t.due_date))).length,
-    paid: taxes.filter((t) => t.status === "paid").length,
+    completed: taxes.filter((t) => t.status === "paid" || t.status === "completed").length,
     overdue: taxes.filter((t) => t.status === "pending" && isPast(parseISO(t.due_date))).length,
-    totalAmount: taxes
-      .filter((t) => t.status === "pending")
-      .reduce((sum, t) => sum + (t.amount || 0), 0),
   };
 
   if (isLoading) {
@@ -98,11 +95,7 @@ export default function Taxes() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">
-              {new Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              }).format(stats.totalAmount)}{" "}
-              pendentes
+              impostos cadastrados
             </p>
           </CardContent>
         </Card>
@@ -120,12 +113,12 @@ export default function Taxes() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pagos</CardTitle>
+            <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.paid}</div>
-            <p className="text-xs text-muted-foreground">Concluídos</p>
+            <div className="text-2xl font-bold">{stats.completed}</div>
+            <p className="text-xs text-muted-foreground">Finalizados</p>
           </CardContent>
         </Card>
 
@@ -158,7 +151,7 @@ export default function Taxes() {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="paid">Pago</SelectItem>
+            <SelectItem value="completed">Concluído</SelectItem>
             <SelectItem value="overdue">Atrasado</SelectItem>
           </SelectContent>
         </Select>

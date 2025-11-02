@@ -21,7 +21,6 @@ export function ObligationForm() {
   const [taxTypeId, setTaxTypeId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [recurrence, setRecurrence] = useState<"none" | "monthly" | "quarterly" | "semiannual" | "annual">("none");
-  const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [responsible, setResponsible] = useState("");
   const [hasInstallments, setHasInstallments] = useState(false);
@@ -43,7 +42,6 @@ export function ObligationForm() {
       due_date: dueDate,
       status: "pending",
       recurrence,
-      amount: amount ? parseFloat(amount) : undefined,
       notes: notes || undefined,
       responsible: responsible || undefined,
     });
@@ -51,7 +49,6 @@ export function ObligationForm() {
     // Criar parcelas se necessário
     if (hasInstallments && installmentCount && parseInt(installmentCount) > 1) {
       const totalInstallments = parseInt(installmentCount);
-      const installmentAmount = amount ? parseFloat(amount) / totalInstallments : 0;
       
       for (let i = 1; i <= totalInstallments; i++) {
         const installmentDueDate = format(addMonths(new Date(dueDate), i - 1), "yyyy-MM-dd");
@@ -59,7 +56,6 @@ export function ObligationForm() {
           obligation_id: obligation.id,
           installment_number: i,
           total_installments: totalInstallments,
-          amount: installmentAmount,
           due_date: installmentDueDate,
           status: "pending",
         });
@@ -73,7 +69,6 @@ export function ObligationForm() {
     setTaxTypeId("");
     setDueDate("");
     setRecurrence("none");
-    setAmount("");
     setNotes("");
     setResponsible("");
     setHasInstallments(false);
@@ -180,18 +175,6 @@ export function ObligationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Valor (R$)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0,00"
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="responsible">Responsável</Label>
             <Input
               id="responsible"
@@ -236,11 +219,6 @@ export function ObligationForm() {
                   onChange={(e) => setInstallmentCount(e.target.value)}
                   placeholder="Ex: 3"
                 />
-                <p className="text-xs text-muted-foreground">
-                  {amount && installmentCount && parseInt(installmentCount) > 1
-                    ? `${installmentCount}x de R$ ${(parseFloat(amount) / parseInt(installmentCount)).toFixed(2)}`
-                    : "Informe o valor para ver o cálculo"}
-                </p>
               </div>
             )}
           </div>

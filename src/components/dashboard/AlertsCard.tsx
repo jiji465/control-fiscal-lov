@@ -1,12 +1,11 @@
-import { AlertCircle, Clock, User } from "lucide-react";
+import { AlertCircle, Clock, User, FileText, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Obligation } from "@/hooks/useObligations";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface AlertsCardProps {
-  obligations: (Obligation & { clients?: { id: string; name: string } | null; tax_types?: { id: string; name: string } | null })[];
+  obligations: any[];
 }
 
 const statusConfig = {
@@ -18,8 +17,8 @@ const statusConfig = {
 
 export function AlertsCard({ obligations }: AlertsCardProps) {
   const today = new Date();
-  const upcomingObligations = obligations
-    .filter((o) => o.status !== "completed")
+  const upcomingItems = obligations
+    .filter((o) => o.status !== "completed" && o.status !== "paid")
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .slice(0, 5);
 
@@ -33,48 +32,59 @@ export function AlertsCard({ obligations }: AlertsCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {upcomingObligations.length === 0 ? (
+          {upcomingItems.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhuma obrigação pendente
+              Nenhum item pendente
             </p>
           ) : (
-            upcomingObligations.map((obligation) => {
+            upcomingItems.map((item) => {
               const daysUntilDue = Math.ceil(
-                (new Date(obligation.due_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                (new Date(item.due_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
               );
-              const config = statusConfig[obligation.status];
+              const config = statusConfig[item.status];
+
+              let displayTitle = "Item";
+              let displayClient = null;
+              let icon = <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />;
+
+              if ('title' in item) { // Obrigação
+                displayTitle = item.title;
+                displayClient = item.clients?.name;
+              } else if ('tax_type_name' in item) { // Imposto
+                displayTitle = item.tax_type_name;
+                displayClient = item.clients?.name;
+                icon = <User className="h-4 w-4 text-muted-foreground mt-0.5" />;
+              } else if ('installment_number' in item) { // Parcela
+                displayTitle = `Parcela ${item.installment_number}/${item.total_installments}`;
+                displayClient = item.obligations?.clients?.name;
+                icon = <CreditCard className="h-4 w-4 text-muted-foreground mt-0.5" />;
+              }
 
               return (
                 <div
-                  key={obligation.id}
+                  key={item.id}
                   className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
-                  <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  {icon}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium truncate">
-                        {obligation.title}
+                        {displayTitle}
                       </p>
-                      <Badge variant={config.badgeVariant} className="shrink-0">
-                        {config.label}
-                      </Badge>
+                      {config && (
+                        <Badge variant={config.badgeVariant} className="shrink-0">
+                          {config.label}
+                        </Badge>
+                      )}
                     </div>
-                    {obligation.clients && (
+                    {displayClient && (
                       <p className="text-xs text-muted-foreground">
-                        {obligation.clients.name}
+                        {displayClient}
                       </p>
-                    )}
-                    {obligation.responsible && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">
-                          {obligation.responsible}
-                        </p>
-                      </div>
                     )}
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
+                        {format(new Date(item.due_date), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                       {daysUntilDue >= 0 && (
                         <span className="text-xs text-muted-foreground">
