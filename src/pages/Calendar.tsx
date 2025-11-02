@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WeekendBadge } from "@/components/shared/WeekendBadge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const statusColors = {
   pending: "bg-pending/10 text-pending-foreground border-pending/30",
@@ -36,13 +37,19 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isDayModalOpen, setIsDayModalOpen] = useState(false);
+  const [selectedDayItems, setSelectedDayItems] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { obligations } = useObligations();
   const { installments } = useInstallments();
   const { taxes } = useTaxes();
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const days = eachDayOfInterval({
+    start: startOfWeek(monthStart, { locale: ptBR }),
+    end: endOfWeek(monthEnd, { locale: ptBR }),
+  });
 
   const allItems = [
     ...obligations.map((o: any) => ({ ...o, type: 'obligation' })),
@@ -68,7 +75,7 @@ export default function Calendar() {
 
     let title = "";
     let client = null;
-    
+
     if (item.type === 'installment') {
       title = `Parcela ${item.installment_number}/${item.total_installments}`;
       if (item.obligations?.title) title += ` - ${item.obligations.title}`;
@@ -97,6 +104,25 @@ export default function Calendar() {
   const pendingCount = filteredItems.filter(i => i.status === 'pending').length;
   const completedCount = filteredItems.filter(i => i.status === 'completed' || i.status === 'paid').length;
   const overdueCount = filteredItems.filter(i => i.status === 'overdue').length;
+
+  const handleDayClick = (day: Date, items: any[]) => {
+    if (items.length === 1) {
+      setSelectedItem(items[0]);
+    } else if (items.length > 1) {
+      setSelectedDayItems(items);
+      setSelectedDate(day);
+      setIsDayModalOpen(true);
+    }
+  };
+
+  const groupedDayItems = selectedDayItems.reduce((acc, item) => {
+    const type = item.type;
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
 
   return (
     <div className="space-y-6 p-6">
@@ -162,31 +188,31 @@ export default function Calendar() {
 
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">
-        <Button 
-          variant={filter === 'all' ? 'default' : 'outline'} 
+        <Button
+          variant={filter === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilter('all')}
         >
           Todos ({allItems.length})
         </Button>
-        <Button 
-          variant={filter === 'obligations' ? 'default' : 'outline'} 
+        <Button
+          variant={filter === 'obligations' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilter('obligations')}
         >
           <CalendarIcon className="h-4 w-4 mr-2" />
           Obrigações ({obligationCount})
         </Button>
-        <Button 
-          variant={filter === 'taxes' ? 'default' : 'outline'} 
+        <Button
+          variant={filter === 'taxes' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilter('taxes')}
         >
           <Receipt className="h-4 w-4 mr-2" />
           Impostos ({taxCount})
         </Button>
-        <Button 
-          variant={filter === 'installments' ? 'default' : 'outline'} 
+        <Button
+          variant={filter === 'installments' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilter('installments')}
         >
@@ -236,7 +262,7 @@ export default function Calendar() {
               </div>
             ))}
 
-            {days.map((day, index) => {
+            {days.map((day) => {
               const dayStr = format(day, "yyyy-MM-dd");
               const items = itemsByDate[dayStr] || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
@@ -246,7 +272,8 @@ export default function Calendar() {
 
               return (
                 <div
-                  key={index}
+                  key={day.toISOString()}
+                  onClick={() => handleDayClick(day, items)}
                   className={`min-h-[120px] bg-card p-2 transition-all hover:bg-accent/10 cursor-pointer ${
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
@@ -270,9 +297,8 @@ export default function Calendar() {
 
                   <div className="space-y-1">
                     {items.slice(0, 3).map((item: any) => (
-                      <button
+                      <div
                         key={item.id}
-                        onClick={() => setSelectedItem(item)}
                         className={`w-full text-left text-xs p-1.5 rounded border ${
                           statusColors[item.status as keyof typeof statusColors]
                         } ${
@@ -290,18 +316,15 @@ export default function Calendar() {
                             {item.displayClient.name}
                           </div>
                         )}
-                      </button>
+                      </div>
                     ))}
                     {items.length > 3 && (
-                      <button
-                        onClick={() => {
-                          const dayItems = items.map((i: any) => ({ ...i, due_date: dayStr }));
-                          setSelectedItem({ type: 'multiple', items: dayItems, date: dayStr });
-                        }}
+                      <div
+                        key="show-more"
                         className="w-full text-xs text-muted-foreground text-center font-medium hover:text-foreground transition-colors"
                       >
                         +{items.length - 3} mais
-                      </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -311,46 +334,10 @@ export default function Calendar() {
         </CardContent>
       </Card>
 
-      {/* Modal de Detalhes */}
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      {/* Modal de Detalhes do Item */}
+      <Dialog open={!!selectedItem && !isDayModalOpen} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          {selectedItem?.type === 'multiple' ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  Itens do dia {format(new Date(selectedItem.date), "dd/MM/yyyy")}
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedItem.items.length} itens nesta data
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-3 mt-4">
-                {selectedItem.items.map((item: any) => (
-                  <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedItem(item)}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {item.type === 'obligation' && <CalendarIcon className="h-4 w-4 text-primary" />}
-                          {item.type === 'tax' && <Receipt className="h-4 w-4 text-[hsl(var(--chart-2))]" />}
-                          {item.type === 'installment' && <CreditCard className="h-4 w-4 text-success" />}
-                          <h3 className="font-semibold">{item.displayTitle}</h3>
-                        </div>
-                        {item.displayClient && (
-                          <p className="text-sm text-muted-foreground">Cliente: {item.displayClient.name}</p>
-                        )}
-                        {item.amount && (
-                          <p className="text-sm font-medium mt-1">
-                            Valor: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.amount)}
-                          </p>
-                        )}
-                      </div>
-                      <StatusBadge status={item.status} variant="compact" />
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </>
-          ) : selectedItem ? (
+          {selectedItem ? (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
@@ -432,6 +419,60 @@ export default function Calendar() {
               </div>
             </>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Itens do Dia */}
+      <Dialog open={isDayModalOpen} onOpenChange={setIsDayModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Itens do dia {selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ''}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedDayItems.length} itens encontrados para esta data.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4 py-4">
+              {Object.entries(groupedDayItems).map(([type, items]) => (
+                <div key={type}>
+                  <h3 className="text-lg font-semibold mb-3 capitalize flex items-center gap-2">
+                    {type === 'obligation' && <CalendarIcon className="h-5 w-5 text-primary" />}
+                    {type === 'tax' && <Receipt className="h-5 w-5 text-[hsl(var(--chart-2))]" />}
+                    {type === 'installment' && <CreditCard className="h-5 w-5 text-success" />}
+                    {type === 'obligation' ? 'Obrigações' : type === 'tax' ? 'Impostos' : 'Parcelamentos'}
+                    <Badge variant="secondary">{items.length}</Badge>
+                  </h3>
+                  <div className="space-y-3">
+                    {items.map((item: any) => (
+                      <Card
+                        key={item.id}
+                        className="p-4 hover:shadow-lg transition-shadow cursor-pointer border-l-4"
+                        style={{ borderColor: `hsl(var(--${type === 'obligation' ? 'primary' : type === 'tax' ? 'chart-2' : 'success'}))` }}
+                        onClick={() => {
+                          setIsDayModalOpen(false);
+                          setSelectedItem(item);
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{item.displayTitle}</h4>
+                            {item.displayClient && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Cliente: {item.displayClient.name}
+                              </p>
+                            )}
+                          </div>
+                          <StatusBadge status={item.status} variant="compact" />
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
