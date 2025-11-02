@@ -72,9 +72,11 @@ export default function Clients() {
                 <p className="text-xs text-muted-foreground mt-2">
                   Cliente desde {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
-                <Button variant="outline" size="sm" className="w-full mt-4">
-                  Ver Detalhes
-                </Button>
+                <div>
+                  <Button variant="outline" size="sm" className="w-full mt-4">
+                    Ver Detalhes
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))

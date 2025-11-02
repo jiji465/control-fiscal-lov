@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameMonth, isToday, addMonths, subMonths, getDay, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -283,10 +283,11 @@ export default function Calendar() {
               </div>
             ))}
 
-            {calendarWeeks.map((week, weekIndex) =>
-              week.map((day) => {
-                const dayStr = format(day, "yyyy-MM-dd");
-                const items = itemsByDate[dayStr] || [];
+            {calendarWeeks.map((week, weekIndex) => (
+              <React.Fragment key={weekIndex}>
+                {week.map((day) => {
+                  const dayStr = format(day, "yyyy-MM-dd");
+                  const items = itemsByDate[dayStr] || [];
                 const isCurrentMonth = isSameMonth(day, currentDate);
                 const isCurrentDay = isToday(day);
                 const dayOfWeek = getDay(day);
@@ -351,8 +352,9 @@ export default function Calendar() {
                     </div>
                   </div>
                 );
-              })
-            )}
+              })}
+              </React.Fragment>
+            ))}
           </div>
         </CardContent>
       </Card>
