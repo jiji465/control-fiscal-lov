@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, DollarSign, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { TaxForm } from "@/components/forms/TaxForm";
+import { TaxEditForm } from "@/components/forms/TaxEditForm";
 import { TaxCard } from "@/components/taxes/TaxCard";
 import { useTaxes } from "@/hooks/useTaxes";
 import { isPast, parseISO } from "date-fns";
@@ -27,6 +28,7 @@ export default function Taxes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTax, setEditingTax] = useState<any>(null);
   const { taxes, isLoading } = useTaxes();
 
   const filteredTaxes = taxes.filter((tax) => {
@@ -175,9 +177,17 @@ export default function Taxes() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTaxes.map((tax) => (
-            <TaxCard key={tax.id} tax={tax} />
+            <TaxCard key={tax.id} tax={tax} onEdit={setEditingTax} />
           ))}
         </div>
+      )}
+
+      {editingTax && (
+        <TaxEditForm
+          tax={editingTax}
+          open={!!editingTax}
+          onOpenChange={(open) => !open && setEditingTax(null)}
+        />
       )}
     </div>
   );

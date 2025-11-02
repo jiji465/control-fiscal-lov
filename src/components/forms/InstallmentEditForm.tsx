@@ -10,6 +10,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -39,11 +46,13 @@ const formSchema = z.object({
 
 interface InstallmentEditFormProps {
   installment: any;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
-  onUpdate: (id: string, data: any) => void;
+  onUpdate?: (id: string, data: any) => void;
 }
 
-export function InstallmentEditForm({ installment, onSuccess, onUpdate }: InstallmentEditFormProps) {
+export function InstallmentEditForm({ installment, open, onOpenChange, onSuccess, onUpdate }: InstallmentEditFormProps) {
   const { clients } = useClients();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -95,7 +104,7 @@ export function InstallmentEditForm({ installment, onSuccess, onUpdate }: Instal
     onSuccess?.();
   };
 
-  return (
+  const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
@@ -273,4 +282,22 @@ export function InstallmentEditForm({ installment, onSuccess, onUpdate }: Instal
       </form>
     </Form>
   );
+
+  if (open !== undefined && onOpenChange) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Parcela</DialogTitle>
+            <DialogDescription>
+              Faça alterações na parcela abaixo
+            </DialogDescription>
+          </DialogHeader>
+          {formContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return formContent;
 }

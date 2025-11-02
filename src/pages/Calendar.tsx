@@ -1,30 +1,41 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle } from "lucide-react";
 import { useObligations } from "@/hooks/useObligations";
 import { useInstallments } from "@/hooks/useInstallments";
 import { useTaxes } from "@/hooks/useTaxes";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { WeekendBadge } from "@/components/shared/WeekendBadge";
 
 const statusColors = {
-  pending: "bg-pending/10 text-pending border-pending/30",
-  in_progress: "bg-primary/10 text-primary border-primary/30",
-  completed: "bg-success/10 text-success border-success/30",
-  overdue: "bg-destructive/10 text-destructive border-destructive/30",
-  paid: "bg-success/10 text-success border-success/30",
+  pending: "bg-pending/10 text-pending-foreground border-pending/30",
+  in_progress: "bg-primary/10 text-primary-foreground border-primary/30",
+  completed: "bg-success/10 text-success-foreground border-success/30",
+  overdue: "bg-destructive/10 text-destructive-foreground border-destructive/30",
+  paid: "bg-success/10 text-success-foreground border-success/30",
 };
 
 const typeColors = {
-  obligation: "border-l-4 border-l-blue-500",
-  tax: "border-l-4 border-l-purple-500",
-  installment: "border-l-4 border-l-green-500",
+  obligation: "border-l-4 border-l-[hsl(var(--primary))]",
+  tax: "border-l-4 border-l-[hsl(var(--chart-2))]",
+  installment: "border-l-4 border-l-[hsl(var(--success))]",
 };
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const { obligations } = useObligations();
   const { installments } = useInstallments();
   const { taxes } = useTaxes();
@@ -60,8 +71,8 @@ export default function Calendar() {
     
     if (item.type === 'installment') {
       title = `Parcela ${item.installment_number}/${item.total_installments}`;
-      if (item.obligation?.title) title += ` - ${item.obligation.title}`;
-      client = item.obligation?.clients;
+      if (item.obligations?.title) title += ` - ${item.obligations.title}`;
+      client = item.obligations?.clients;
     } else if (item.type === 'tax') {
       title = item.tax_type_name;
       client = item.clients;
@@ -71,15 +82,21 @@ export default function Calendar() {
     }
 
     acc[dueDate].push({
-      id: item.id,
-      title,
-      status: item.status,
-      client,
-      type: item.type,
+      ...item,
+      displayTitle: title,
+      displayClient: client,
     });
 
     return acc;
   }, {});
+
+  // Contadores para legendas
+  const obligationCount = filteredItems.filter(i => i.type === 'obligation').length;
+  const taxCount = filteredItems.filter(i => i.type === 'tax').length;
+  const installmentCount = filteredItems.filter(i => i.type === 'installment').length;
+  const pendingCount = filteredItems.filter(i => i.status === 'pending').length;
+  const completedCount = filteredItems.filter(i => i.status === 'completed' || i.status === 'paid').length;
+  const overdueCount = filteredItems.filter(i => i.status === 'overdue').length;
 
   return (
     <div className="space-y-6 p-6">
@@ -92,57 +109,90 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Legendas e Filtros */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex gap-4 items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500" />
-            <span className="text-sm font-normal">Obrigações</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-purple-500" />
-            <span className="text-sm font-normal">Impostos</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500" />
-            <span className="text-sm font-normal">Parcelamentos</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3 w-3 text-warning" />
-            <span className="text-sm font-normal">Final de Semana</span>
-          </div>
-        </div>
+      {/* Legendas Dinâmicas com Contadores */}
+      <Card className="border-border/50 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Legendas de Tipo */}
+            <div>
+              <h3 className="text-sm font-medium mb-3 text-muted-foreground">Por Tipo</h3>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[hsl(var(--primary))]" />
+                  <span className="text-sm">Obrigações</span>
+                  <Badge variant="secondary" className="ml-1">{obligationCount}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[hsl(var(--chart-2))]" />
+                  <span className="text-sm">Impostos</span>
+                  <Badge variant="secondary" className="ml-1">{taxCount}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[hsl(var(--success))]" />
+                  <span className="text-sm">Parcelamentos</span>
+                  <Badge variant="secondary" className="ml-1">{installmentCount}</Badge>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex gap-2">
-          <Button 
-            variant={filter === 'all' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setFilter('all')}
-          >
-            Todos
-          </Button>
-          <Button 
-            variant={filter === 'obligations' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setFilter('obligations')}
-          >
-            Obrigações
-          </Button>
-          <Button 
-            variant={filter === 'taxes' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setFilter('taxes')}
-          >
-            Impostos
-          </Button>
-          <Button 
-            variant={filter === 'installments' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setFilter('installments')}
-          >
-            Parcelamentos
-          </Button>
-        </div>
+            {/* Legendas de Status */}
+            <div>
+              <h3 className="text-sm font-medium mb-3 text-muted-foreground">Por Status</h3>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[hsl(var(--warning))]" />
+                  <span className="text-sm">Pendente</span>
+                  <Badge variant="secondary" className="ml-1">{pendingCount}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[hsl(var(--success))]" />
+                  <span className="text-sm">Concluído/Pago</span>
+                  <Badge variant="secondary" className="ml-1">{completedCount}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[hsl(var(--destructive))]" />
+                  <span className="text-sm">Atrasado</span>
+                  <Badge variant="secondary" className="ml-1">{overdueCount}</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filtros */}
+      <div className="flex gap-2 flex-wrap">
+        <Button 
+          variant={filter === 'all' ? 'default' : 'outline'} 
+          size="sm"
+          onClick={() => setFilter('all')}
+        >
+          Todos ({allItems.length})
+        </Button>
+        <Button 
+          variant={filter === 'obligations' ? 'default' : 'outline'} 
+          size="sm"
+          onClick={() => setFilter('obligations')}
+        >
+          <CalendarIcon className="h-4 w-4 mr-2" />
+          Obrigações ({obligationCount})
+        </Button>
+        <Button 
+          variant={filter === 'taxes' ? 'default' : 'outline'} 
+          size="sm"
+          onClick={() => setFilter('taxes')}
+        >
+          <Receipt className="h-4 w-4 mr-2" />
+          Impostos ({taxCount})
+        </Button>
+        <Button 
+          variant={filter === 'installments' ? 'default' : 'outline'} 
+          size="sm"
+          onClick={() => setFilter('installments')}
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          Parcelamentos ({installmentCount})
+        </Button>
       </div>
 
       <Card className="border-border/50 shadow-sm">
@@ -180,7 +230,7 @@ export default function Calendar() {
             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
               <div
                 key={day}
-                className="bg-muted/50 p-3 text-center text-sm font-normal"
+                className="bg-muted/50 p-3 text-center text-sm font-medium text-foreground"
               >
                 {day}
               </div>
@@ -197,19 +247,19 @@ export default function Calendar() {
               return (
                 <div
                   key={index}
-                  className={`min-h-[120px] bg-card p-2 transition-colors hover:bg-accent/5 ${
+                  className={`min-h-[120px] bg-card p-2 transition-all hover:bg-accent/10 cursor-pointer ${
                     !isCurrentMonth ? "opacity-40" : ""
                   } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
-                    isWeekend ? "bg-muted/30" : ""
+                    isWeekend ? "bg-muted/20" : ""
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span
                       className={`text-sm ${
                         isCurrentDay
-                          ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-medium"
-                          : "font-normal"
-                      } ${isWeekend ? "text-muted-foreground" : ""}`}
+                          ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-semibold"
+                          : "font-normal text-foreground"
+                      } ${isWeekend && !isCurrentDay ? "text-muted-foreground" : ""}`}
                     >
                       {format(day, "d")}
                     </span>
@@ -220,31 +270,38 @@ export default function Calendar() {
 
                   <div className="space-y-1">
                     {items.slice(0, 3).map((item: any) => (
-                      <div
+                      <button
                         key={item.id}
-                        className={`text-xs p-1.5 rounded border ${
+                        onClick={() => setSelectedItem(item)}
+                        className={`w-full text-left text-xs p-1.5 rounded border ${
                           statusColors[item.status as keyof typeof statusColors]
                         } ${
                           typeColors[item.type as keyof typeof typeColors]
-                        } truncate`}
+                        } truncate hover:shadow-md transition-all`}
                       >
-                        <div className="font-normal flex items-center gap-1">
+                        <div className="font-medium flex items-center gap-1">
                           {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
                           {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
                           {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
-                          {item.title}
+                          {item.displayTitle}
                         </div>
-                        {item.client && (
-                          <div className="text-xs opacity-75 truncate">
-                            {item.client.name}
+                        {item.displayClient && (
+                          <div className="text-xs opacity-75 truncate mt-0.5">
+                            {item.displayClient.name}
                           </div>
                         )}
-                      </div>
+                      </button>
                     ))}
                     {items.length > 3 && (
-                      <div className="text-xs text-muted-foreground text-center font-normal">
+                      <button
+                        onClick={() => {
+                          const dayItems = items.map((i: any) => ({ ...i, due_date: dayStr }));
+                          setSelectedItem({ type: 'multiple', items: dayItems, date: dayStr });
+                        }}
+                        className="w-full text-xs text-muted-foreground text-center font-medium hover:text-foreground transition-colors"
+                      >
                         +{items.length - 3} mais
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -253,6 +310,130 @@ export default function Calendar() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Detalhes */}
+      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedItem?.type === 'multiple' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  Itens do dia {format(new Date(selectedItem.date), "dd/MM/yyyy")}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedItem.items.length} itens nesta data
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 mt-4">
+                {selectedItem.items.map((item: any) => (
+                  <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedItem(item)}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {item.type === 'obligation' && <CalendarIcon className="h-4 w-4 text-primary" />}
+                          {item.type === 'tax' && <Receipt className="h-4 w-4 text-[hsl(var(--chart-2))]" />}
+                          {item.type === 'installment' && <CreditCard className="h-4 w-4 text-success" />}
+                          <h3 className="font-semibold">{item.displayTitle}</h3>
+                        </div>
+                        {item.displayClient && (
+                          <p className="text-sm text-muted-foreground">Cliente: {item.displayClient.name}</p>
+                        )}
+                        {item.amount && (
+                          <p className="text-sm font-medium mt-1">
+                            Valor: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.amount)}
+                          </p>
+                        )}
+                      </div>
+                      <StatusBadge status={item.status} variant="compact" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : selectedItem ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {selectedItem.type === 'obligation' && <CalendarIcon className="h-5 w-5 text-primary" />}
+                  {selectedItem.type === 'tax' && <Receipt className="h-5 w-5 text-[hsl(var(--chart-2))]" />}
+                  {selectedItem.type === 'installment' && <CreditCard className="h-5 w-5 text-success" />}
+                  {selectedItem.displayTitle}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedItem.type === 'obligation' && 'Obrigação Fiscal'}
+                  {selectedItem.type === 'tax' && 'Imposto'}
+                  {selectedItem.type === 'installment' && 'Parcelamento'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <StatusBadge status={selectedItem.status} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Vencimento</p>
+                    <p className="text-sm font-semibold">
+                      {format(new Date(selectedItem.due_date), "dd/MM/yyyy")}
+                    </p>
+                    <WeekendBadge dueDate={selectedItem.due_date} originalDate={selectedItem.original_due_date} />
+                  </div>
+                </div>
+
+                {selectedItem.displayClient && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Cliente</p>
+                    <p className="text-sm font-semibold">{selectedItem.displayClient.name}</p>
+                  </div>
+                )}
+
+                {selectedItem.amount && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Valor</p>
+                    <p className="text-lg font-bold text-primary">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedItem.amount)}
+                    </p>
+                  </div>
+                )}
+
+                {selectedItem.description && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Descrição</p>
+                    <p className="text-sm">{selectedItem.description}</p>
+                  </div>
+                )}
+
+                {selectedItem.notes && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Observações</p>
+                    <p className="text-sm">{selectedItem.notes}</p>
+                  </div>
+                )}
+
+                {selectedItem.responsible && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Responsável</p>
+                    <p className="text-sm">{selectedItem.responsible}</p>
+                  </div>
+                )}
+
+                {selectedItem.recurrence && selectedItem.recurrence !== 'none' && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Recorrência</p>
+                    <Badge variant="outline">
+                      {selectedItem.recurrence === 'monthly' && 'Mensal'}
+                      {selectedItem.recurrence === 'quarterly' && 'Trimestral'}
+                      {selectedItem.recurrence === 'semiannual' && 'Semestral'}
+                      {selectedItem.recurrence === 'annual' && 'Anual'}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

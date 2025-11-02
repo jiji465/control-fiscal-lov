@@ -10,6 +10,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -41,11 +48,13 @@ const formSchema = z.object({
 
 interface TaxEditFormProps {
   tax: any;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
-  onUpdate: (id: string, data: any) => void;
+  onUpdate?: (id: string, data: any) => void;
 }
 
-export function TaxEditForm({ tax, onSuccess, onUpdate }: TaxEditFormProps) {
+export function TaxEditForm({ tax, open, onOpenChange, onSuccess, onUpdate }: TaxEditFormProps) {
   const { clients } = useClients();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -99,7 +108,7 @@ export function TaxEditForm({ tax, onSuccess, onUpdate }: TaxEditFormProps) {
     onSuccess?.();
   };
 
-  return (
+  const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
@@ -307,4 +316,22 @@ export function TaxEditForm({ tax, onSuccess, onUpdate }: TaxEditFormProps) {
       </form>
     </Form>
   );
+
+  if (open !== undefined && onOpenChange) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Imposto</DialogTitle>
+            <DialogDescription>
+              Faça alterações no imposto abaixo
+            </DialogDescription>
+          </DialogHeader>
+          {formContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return formContent;
 }

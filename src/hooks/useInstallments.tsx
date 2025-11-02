@@ -24,7 +24,17 @@ export function useInstallments(obligationId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("installments")
-        .select("*")
+        .select(`
+          *,
+          obligations!installments_obligation_id_fkey (
+            id,
+            title,
+            clients (
+              id,
+              name
+            )
+          )
+        `)
         .order("due_date", { ascending: true });
 
       if (obligationId) {
@@ -33,7 +43,7 @@ export function useInstallments(obligationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Installment[];
+      return data;
     },
   });
 
