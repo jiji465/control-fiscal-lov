@@ -48,11 +48,11 @@ export default function Analytics() {
 
   // Dados por tipo de imposto
   const taxTypeData = taxes.reduce((acc: any[], tax) => {
-    const existing = acc.find(item => item.name === tax.tax_type_name);
+    const existing = acc.find(item => item.name === tax.title);
     if (existing) {
       existing.value++;
     } else {
-      acc.push({ name: tax.tax_type_name, value: 1 });
+      acc.push({ name: tax.title, value: 1 });
     }
     return acc;
   }, []);

@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   client_id: z.string().min(1, "Cliente é obrigatório"),
-  tax_type_name: z.string().min(1, "Tipo de imposto é obrigatório"),
+  title: z.string().min(1, "Título é obrigatório"),
   description: z.string().optional(),
   due_date: z.date(),
   recurrence: z.enum(["none", "monthly", "quarterly", "semiannual", "annual"]),
@@ -60,7 +60,7 @@ export function TaxEditForm({ tax, open, onOpenChange, onSuccess, onUpdate }: Ta
     resolver: zodResolver(formSchema),
     defaultValues: {
       client_id: tax.client_id || "",
-      tax_type_name: tax.tax_type_name || "",
+      title: tax.title || "",
       description: tax.description || "",
       due_date: new Date(tax.due_date),
       recurrence: tax.recurrence || "none",
@@ -136,10 +136,10 @@ export function TaxEditForm({ tax, open, onOpenChange, onSuccess, onUpdate }: Ta
 
         <FormField
           control={form.control}
-          name="tax_type_name"
+          name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tipo de Imposto</FormLabel>
+              <FormLabel>Título</FormLabel>
               <FormControl>
                 <Input placeholder="Ex: ICMS, ISS, IRPJ..." {...field} />
               </FormControl>

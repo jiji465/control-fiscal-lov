@@ -52,7 +52,7 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg truncate">{tax.tax_type_name}</h3>
+            <h3 className="font-semibold text-lg truncate">{tax.title}</h3>
             {tax.clients && (
               <p className="text-sm text-muted-foreground truncate">
                 {tax.clients.name}

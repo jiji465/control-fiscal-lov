@@ -50,8 +50,8 @@ export function AlertsCard({ obligations }: AlertsCardProps) {
               if ('title' in item) { // Obrigação
                 displayTitle = item.title;
                 displayClient = item.clients?.name;
-              } else if ('tax_type_name' in item) { // Imposto
-                displayTitle = item.tax_type_name;
+              } else if ('title' in item) { // Imposto
+                displayTitle = item.title;
                 displayClient = item.clients?.name;
                 icon = <User className="h-4 w-4 text-muted-foreground mt-0.5" />;
               } else if ('installment_number' in item) { // Parcela

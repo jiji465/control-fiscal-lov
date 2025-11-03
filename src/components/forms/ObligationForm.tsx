@@ -1,57 +1,118 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Loader2 } from "lucide-react";
 import { useObligations } from "@/hooks/useObligations";
 import { useClients } from "@/hooks/useClients";
-import { useTaxTypes } from "@/hooks/useTaxTypes";
 import { useInstallments } from "@/hooks/useInstallments";
-import { addMonths, format } from "date-fns";
+import { addMonths, format, parseISO } from "date-fns";
+import { adjustDueDateForWeekend, isWeekend } from "@/lib/weekendUtils";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useState } from "react";
+
+const formSchema = z.object({
+  title: z.string().min(1, "Título é obrigatório"),
+  description: z.string().optional(),
+  client_id: z.string().min(1, "Cliente é obrigatório"),
+  due_date: z.string().min(1, "Data de vencimento é obrigatória"),
+  recurrence: z.enum(["none", "monthly", "quarterly", "semiannual", "annual"]),
+  notes: z.string().optional(),
+  responsible: z.string().optional(),
+  weekend_handling: z.enum(["advance", "postpone", "next_business_day"]),
+  has_installments: z.boolean().default(false),
+  installment_count: z.string().optional(),
+});
 
 export function ObligationForm() {
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [taxTypeId, setTaxTypeId] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [recurrence, setRecurrence] = useState<"none" | "monthly" | "quarterly" | "semiannual" | "annual">("none");
-  const [notes, setNotes] = useState("");
-  const [responsible, setResponsible] = useState("");
-  const [hasInstallments, setHasInstallments] = useState(false);
-  const [installmentCount, setInstallmentCount] = useState("1");
-  
   const { createObligation } = useObligations();
   const { clients } = useClients();
-  const { taxTypes } = useTaxTypes();
   const { createInstallment } = useInstallments();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      recurrence: "none",
+      weekend_handling: "next_business_day",
+      has_installments: false,
+      installment_count: "1",
+    },
+  });
+
+  const watchedDueDate = form.watch("due_date");
+  const watchedWeekendHandling = form.watch("weekend_handling");
+  const hasInstallments = form.watch("has_installments");
+
+  const dueDateIsWeekend = watchedDueDate && isWeekend(parseISO(watchedDueDate));
+  const adjustedDate =
+    watchedDueDate && dueDateIsWeekend
+      ? adjustDueDateForWeekend(
+          parseISO(watchedDueDate),
+          watchedWeekendHandling
+        )
+      : null;
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const dueDate = parseISO(values.due_date);
+    const originalDueDate = isWeekend(dueDate) ? values.due_date : null;
+    const adjustedDueDate = isWeekend(dueDate)
+      ? format(
+          adjustDueDateForWeekend(dueDate, values.weekend_handling),
+          "yyyy-MM-dd"
+        )
+      : values.due_date;
+
     const obligation = await createObligation.mutateAsync({
-      title,
-      description: description || undefined,
-      client_id: clientId,
-      tax_type_id: taxTypeId || undefined,
-      due_date: dueDate,
+      title: values.title,
+      description: values.description,
+      client_id: values.client_id,
+      due_date: adjustedDueDate,
+      original_due_date: originalDueDate,
       status: "pending",
-      recurrence,
-      notes: notes || undefined,
-      responsible: responsible || undefined,
+      recurrence: values.recurrence,
+      notes: values.notes,
+      responsible: values.responsible,
+      weekend_handling: values.weekend_handling,
     });
 
-    // Criar parcelas se necessário
-    if (hasInstallments && installmentCount && parseInt(installmentCount) > 1) {
-      const totalInstallments = parseInt(installmentCount);
-      
+    if (
+      values.has_installments &&
+      values.installment_count &&
+      parseInt(values.installment_count) > 1
+    ) {
+      const totalInstallments = parseInt(values.installment_count);
       for (let i = 1; i <= totalInstallments; i++) {
-        const installmentDueDate = format(addMonths(new Date(dueDate), i - 1), "yyyy-MM-dd");
+        const installmentDueDate = format(
+          addMonths(new Date(dueDate), i - 1),
+          "yyyy-MM-dd"
+        );
         await createInstallment.mutateAsync({
           obligation_id: obligation.id,
           installment_number: i,
@@ -62,17 +123,7 @@ export function ObligationForm() {
       }
     }
 
-    // Reset form
-    setTitle("");
-    setDescription("");
-    setClientId("");
-    setTaxTypeId("");
-    setDueDate("");
-    setRecurrence("none");
-    setNotes("");
-    setResponsible("");
-    setHasInstallments(false);
-    setInstallmentCount("1");
+    form.reset();
     setOpen(false);
   };
 
@@ -88,151 +139,259 @@ export function ObligationForm() {
         <DialogHeader>
           <DialogTitle>Nova Obrigação Fiscal</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: DCTF - Declaração de Débitos"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ex: DCTF - Declaração de Débitos"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrição detalhada da obrigação"
-              rows={3}
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descrição detalhada da obrigação"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="client">Cliente *</Label>
-              <Select value={clientId} onValueChange={setClientId} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FormField
+              control={form.control}
+              name="client_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cliente *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o cliente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="taxType">Tipo de Imposto</Label>
-              <Select value={taxTypeId} onValueChange={setTaxTypeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {taxTypes.map((taxType) => (
-                    <SelectItem key={taxType.id} value={taxType.id}>
-                      {taxType.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="due_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Vencimento *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Data de Vencimento *</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                required
+              <FormField
+                control={form.control}
+                name="recurrence"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recorrência</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Não se repete</SelectItem>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="quarterly">Trimestral</SelectItem>
+                        <SelectItem value="semiannual">Semestral</SelectItem>
+                        <SelectItem value="annual">Anual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="recurrence">Recorrência</Label>
-              <Select value={recurrence} onValueChange={(value: any) => setRecurrence(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Não se repete</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="quarterly">Trimestral</SelectItem>
-                  <SelectItem value="semiannual">Semestral</SelectItem>
-                  <SelectItem value="annual">Anual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="responsible">Responsável</Label>
-            <Input
-              id="responsible"
-              value={responsible}
-              onChange={(e) => setResponsible(e.target.value)}
-              placeholder="Nome do responsável pela obrigação"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notas adicionais sobre esta obrigação"
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="hasInstallments"
-                checked={hasInstallments}
-                onCheckedChange={(checked) => setHasInstallments(checked as boolean)}
-              />
-              <Label htmlFor="hasInstallments" className="font-normal cursor-pointer">
-                Dividir em parcelas
-              </Label>
-            </div>
-
-            {hasInstallments && (
-              <div className="space-y-2 pl-6">
-                <Label htmlFor="installmentCount">Número de Parcelas</Label>
-                <Input
-                  id="installmentCount"
-                  type="number"
-                  min="2"
-                  max="12"
-                  value={installmentCount}
-                  onChange={(e) => setInstallmentCount(e.target.value)}
-                  placeholder="Ex: 3"
-                />
-              </div>
+            {dueDateIsWeekend && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Esta data cai em um final de semana.
+                  {adjustedDate && (
+                    <span className="font-semibold">
+                      {" "}
+                      Será ajustada para {format(adjustedDate, "dd/MM/yyyy")}.
+                    </span>
+                  )}
+                </AlertDescription>
+              </Alert>
             )}
-          </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={createObligation.isPending}>
-              {createObligation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Criar Obrigação
-            </Button>
-          </div>
-        </form>
+            <FormField
+              control={form.control}
+              name="weekend_handling"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tratamento de Final de Semana</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="advance">
+                        Antecipar para sexta-feira
+                      </SelectItem>
+                      <SelectItem value="postpone">
+                        Adiar para segunda-feira
+                      </SelectItem>
+                      <SelectItem value="next_business_day">
+                        Próximo dia útil (padrão)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="responsible"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsável</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nome do responsável pela obrigação"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Notas adicionais sobre esta obrigação"
+                      rows={2}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-4 border-t pt-4">
+              <FormField
+                control={form.control}
+                name="has_installments"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Dividir em parcelas
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              {hasInstallments && (
+                <FormField
+                  control={form.control}
+                  name="installment_count"
+                  render={({ field }) => (
+                    <FormItem className="pl-6">
+                      <FormLabel>Número de Parcelas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="2"
+                          max="12"
+                          placeholder="Ex: 3"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={createObligation.isPending}
+              >
+                {createObligation.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Criar Obrigação
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -22,6 +22,7 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          tax_regime: "simples_nacional" | "lucro_presumido" | "lucro_real"
           updated_at: string
           user_id: string | null
         }
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          tax_regime: "simples_nacional" | "lucro_presumido" | "lucro_real"
           updated_at?: string
           user_id?: string | null
         }
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          tax_regime?: "simples_nacional" | "lucro_presumido" | "lucro_real"
           updated_at?: string
           user_id?: string | null
         }
@@ -148,7 +151,6 @@ export type Database = {
           recurrence: Database["public"]["Enums"]["recurrence_type"]
           responsible: string | null
           status: Database["public"]["Enums"]["obligation_status"]
-          tax_type_id: string | null
           title: string
           updated_at: string
           user_id: string | null
@@ -168,7 +170,6 @@ export type Database = {
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
-          tax_type_id?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
@@ -188,7 +189,6 @@ export type Database = {
           recurrence?: Database["public"]["Enums"]["recurrence_type"]
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
-          tax_type_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -200,13 +200,6 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "obligations_tax_type_id_fkey"
-            columns: ["tax_type_id"]
-            isOneToOne: false
-            referencedRelation: "tax_types"
             referencedColumns: ["id"]
           },
         ]
@@ -271,30 +264,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tax_types: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       taxes: {
         Row: {
           auto_created: boolean | null
@@ -310,7 +279,7 @@ export type Database = {
           recurrence: string
           responsible: string | null
           status: string
-          tax_type_name: string
+          title: string
           updated_at: string
           user_id: string | null
           weekend_handling: string | null
@@ -329,7 +298,7 @@ export type Database = {
           recurrence?: string
           responsible?: string | null
           status?: string
-          tax_type_name: string
+          title: string
           updated_at?: string
           user_id?: string | null
           weekend_handling?: string | null
@@ -348,7 +317,7 @@ export type Database = {
           recurrence?: string
           responsible?: string | null
           status?: string
-          tax_type_name?: string
+          title?: string
           updated_at?: string
           user_id?: string | null
           weekend_handling?: string | null

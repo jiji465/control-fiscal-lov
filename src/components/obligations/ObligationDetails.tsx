@@ -10,7 +10,6 @@ import { CalendarIcon, Building2, User, Repeat, FileText, AlertTriangle, CheckCi
 interface ObligationDetailsProps {
   obligation: Obligation & { 
     clients?: { id: string; name: string } | null; 
-    tax_types?: { id: string; name: string } | null;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -117,15 +116,6 @@ export function ObligationDetails({ obligation, open, onOpenChange }: Obligation
               </div>
             )}
 
-            {obligation.tax_types && (
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Tipo de Imposto</p>
-                  <p className="text-sm text-muted-foreground">{obligation.tax_types.name}</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {obligation.notes && (

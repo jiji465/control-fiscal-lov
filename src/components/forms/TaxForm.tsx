@@ -28,7 +28,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   client_id: z.string().min(1, "Cliente é obrigatório"),
-  tax_type_name: z.string().min(1, "Tipo de imposto é obrigatório"),
+  title: z.string().min(1, "Título é obrigatório"),
   description: z.string().optional(),
   due_date: z.string().min(1, "Data de vencimento é obrigatória"),
   recurrence: z.enum(["none", "monthly", "quarterly", "semiannual", "annual"]),
@@ -70,7 +70,7 @@ export function TaxForm({ onSuccess }: TaxFormProps) {
 
     await createTax.mutateAsync({
       client_id: values.client_id,
-      tax_type_name: values.tax_type_name,
+      title: values.title,
       description: values.description,
       due_date: adjustedDueDate,
       original_due_date: originalDueDate,
@@ -115,10 +115,10 @@ export function TaxForm({ onSuccess }: TaxFormProps) {
 
         <FormField
           control={form.control}
-          name="tax_type_name"
+          name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tipo de Imposto *</FormLabel>
+              <FormLabel>Título *</FormLabel>
               <FormControl>
                 <Input placeholder="Ex: ICMS, ISS, PIS, COFINS" {...field} />
               </FormControl>

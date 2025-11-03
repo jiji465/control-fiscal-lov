@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/select";
 import { ObligationCard } from "@/components/obligations/ObligationCard";
 import { ObligationForm } from "@/components/forms/ObligationForm";
-import { TaxTypeForm } from "@/components/forms/TaxTypeForm";
 import { useObligations } from "@/hooks/useObligations";
 import { ObligationStatus } from "@/types";
 
@@ -27,8 +26,7 @@ export default function Obligations() {
   const filteredObligations = obligations.filter((obligation) => {
     const matchesSearch =
       obligation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obligation.clients?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obligation.tax_types?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      obligation.clients?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || obligation.status === statusFilter;
 
@@ -45,7 +43,6 @@ export default function Obligations() {
           </p>
         </div>
         <div className="flex gap-2">
-          <TaxTypeForm />
           <ObligationForm />
         </div>
       </div>

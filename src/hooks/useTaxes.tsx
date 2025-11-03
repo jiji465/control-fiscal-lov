@@ -6,7 +6,7 @@ export interface Tax {
   id: string;
   user_id?: string;
   client_id: string;
-  tax_type_name: string;
+  title: string;
   description?: string;
   amount?: number;
   due_date: string;

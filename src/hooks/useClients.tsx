@@ -9,6 +9,7 @@ export interface Client {
   document: string;
   email?: string;
   phone?: string;
+  tax_regime: "simples_nacional" | "lucro_presumido" | "lucro_real";
   created_at: string;
   updated_at: string;
 }

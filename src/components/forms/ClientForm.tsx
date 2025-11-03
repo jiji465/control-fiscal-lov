@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 
@@ -12,16 +13,24 @@ export function ClientForm() {
   const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [taxRegime, setTaxRegime] = useState<"simples_nacional" | "lucro_presumido" | "lucro_real" | "">("");
   const { createClient } = useClients();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!taxRegime) {
+      // TODO: Add proper validation and feedback
+      alert("Por favor, selecione um regime tributário.");
+      return;
+    }
     
     await createClient.mutateAsync({
       name,
       document,
       email: email || undefined,
       phone: phone || undefined,
+      tax_regime: taxRegime,
     });
 
     // Reset form
@@ -29,6 +38,7 @@ export function ClientForm() {
     setDocument("");
     setEmail("");
     setPhone("");
+    setTaxRegime("");
     setOpen(false);
   };
 
@@ -64,6 +74,19 @@ export function ClientForm() {
               placeholder="00.000.000/0000-00"
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tax_regime">Regime Tributário *</Label>
+            <Select value={taxRegime} onValueChange={(value) => setTaxRegime(value as any)} required>
+              <SelectTrigger id="tax_regime">
+                <SelectValue placeholder="Selecione o regime" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
+                <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
+                <SelectItem value="lucro_real">Lucro Real</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

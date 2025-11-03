@@ -6,7 +6,6 @@ export interface Obligation {
   id: string;
   user_id?: string;
   client_id: string;
-  tax_type_id?: string;
   title: string;
   description?: string;
   due_date: string;
@@ -34,16 +33,12 @@ export function useObligations() {
           clients (
             id,
             name
-          ),
-          tax_types (
-            id,
-            name
           )
         `)
         .order("due_date", { ascending: true });
 
       if (error) throw error;
-      return data as (Obligation & { clients: { id: string; name: string } | null; tax_types: { id: string; name: string } | null })[];
+      return data as (Obligation & { clients: { id: string; name: string } | null; })[];
     },
   });
 

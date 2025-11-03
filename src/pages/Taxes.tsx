@@ -33,7 +33,7 @@ export default function Taxes() {
 
   const filteredTaxes = taxes.filter((tax) => {
     const matchesSearch =
-      tax.tax_type_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tax.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (tax.clients?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (tax.description || "").toLowerCase().includes(searchTerm.toLowerCase());
 

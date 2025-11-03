@@ -10,7 +10,7 @@ import { ObligationDetails } from "./ObligationDetails";
 import { ObligationEditForm } from "@/components/forms/ObligationEditForm";
 
 interface ObligationCardProps {
-  obligation: Obligation & { clients?: { id: string; name: string } | null; tax_types?: { id: string; name: string } | null };
+  obligation: Obligation & { clients?: { id: string; name: string } | null; };
 }
 
 const statusConfig = {
@@ -102,14 +102,6 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
             <span>
               Concluída em {format(new Date(obligation.completed_at), "dd/MM/yyyy", { locale: ptBR })}
             </span>
-          </div>
-        )}
-
-        {obligation.tax_types && (
-          <div className="mt-2">
-            <Badge variant="outline" className="text-xs">
-              {obligation.tax_types.name}
-            </Badge>
           </div>
         )}
       </CardContent>
