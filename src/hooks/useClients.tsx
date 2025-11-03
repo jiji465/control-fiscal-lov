@@ -9,6 +9,7 @@ export interface Client {
   document: string;
   email?: string;
   phone?: string;
+  tax_regime: "simples_nacional" | "lucro_presumido" | "lucro_real";
   created_at: string;
   updated_at: string;
 }
@@ -41,8 +42,11 @@ export function useClients() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+    onSuccess: (newClient) => {
+      queryClient.setQueryData(["clients"], (oldData: Client[] = []) => [
+        ...oldData,
+        newClient,
+      ]);
       toast({ title: "Cliente criado com sucesso!" });
     },
     onError: (error: Error) => {

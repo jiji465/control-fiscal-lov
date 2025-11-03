@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ClientForm } from "@/components/forms/ClientForm";
 import { useClients } from "@/hooks/useClients";
 import { format } from "date-fns";
@@ -53,9 +52,10 @@ export default function Clients() {
           </div>
         ) : (
           filteredClients.map((client) => (
-            <Card key={client.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <h3 className="font-semibold">{client.name}</h3>
+            <div key={client.id}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <h3 className="font-semibold">{client.name}</h3>
                 <p className="text-sm text-muted-foreground">{client.document}</p>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -72,13 +72,14 @@ export default function Clients() {
                 <p className="text-xs text-muted-foreground mt-2">
                   Cliente desde {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
-                <div>
-                  <Button variant="outline" size="sm" className="w-full mt-4">
+                <div className="pt-4">
+                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full">
                     Ver Detalhes
-                  </Button>
+                  </button>
                 </div>
               </CardContent>
             </Card>
+            </div>
           ))
         )}
       </div>

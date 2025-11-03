@@ -1,3 +1,4 @@
+
 import { AlertCircle, Clock, User, FileText, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,7 +6,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface AlertsCardProps {
-  obligations: any[];
+  items: any[];
 }
 
 const statusConfig = {
@@ -15,9 +16,9 @@ const statusConfig = {
   overdue: { label: "Atrasada", badgeVariant: "destructive" as const },
 };
 
-export function AlertsCard({ obligations }: AlertsCardProps) {
+export function AlertsCard({ items }: AlertsCardProps) {
   const today = new Date();
-  const upcomingItems = obligations
+  const upcomingItems = items
     .filter((o) => o.status !== "completed" && o.status !== "paid")
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .slice(0, 5);
@@ -47,13 +48,10 @@ export function AlertsCard({ obligations }: AlertsCardProps) {
               let displayClient = null;
               let icon = <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />;
 
-              if ('title' in item) { // Obrigação
+              if (item.type === 'obligation' || item.type === 'tax') {
                 displayTitle = item.title;
                 displayClient = item.clients?.name;
-              } else if ('tax_type_name' in item) { // Imposto
-                displayTitle = item.tax_type_name;
-                displayClient = item.clients?.name;
-                icon = <User className="h-4 w-4 text-muted-foreground mt-0.5" />;
+                icon = item.type === 'tax' ? <User className="h-4 w-4 text-muted-foreground mt-0.5" /> : <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />;
               } else if ('installment_number' in item) { // Parcela
                 displayTitle = `Parcela ${item.installment_number}/${item.total_installments}`;
                 displayClient = item.obligations?.clients?.name;

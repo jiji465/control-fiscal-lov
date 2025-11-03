@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInstallments } from "@/hooks/useInstallments";
-import { useObligations } from "@/hooks/useObligations";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { InstallmentCard } from "@/components/installments/InstallmentCard";
 import { InstallmentForm } from "@/components/forms/InstallmentForm";
 import { Search, Plus } from "lucide-react";
@@ -14,7 +15,7 @@ export default function Installments() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [formOpen, setFormOpen] = useState(false);
   const { installments, isLoading } = useInstallments();
-  const { obligations } = useObligations();
+  const { deadlines } = useDeadlines();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -22,17 +23,17 @@ export default function Installments() {
 
   // Enriquecer parcelas com dados da obrigação
   const enrichedInstallments = installments.map(installment => {
-    const obligation = obligations.find(o => o.id === installment.obligation_id);
+    const deadline = deadlines.find(o => o.id === installment.obligation_id);
     return {
       ...installment,
-      obligation
+      deadline
     };
   });
 
   const filteredInstallments = enrichedInstallments.filter((installment) => {
     const matchesSearch = 
-      installment.obligation?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      installment.obligation?.clients?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      installment.deadline?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      installment.deadline?.clients?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || installment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -50,7 +51,7 @@ export default function Installments() {
         <div>
           <h1 className="text-3xl font-semibold">Parcelamentos</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie todas as parcelas de obrigações
+            Gerencie todas as parcelas de seus prazos
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
@@ -106,7 +107,7 @@ export default function Installments() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por obrigação ou cliente..."
+                placeholder="Buscar por prazo ou cliente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

@@ -1,22 +1,21 @@
+
 import { FileText, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
-import { useObligations } from "@/hooks/useObligations";
-import { useTaxes } from "@/hooks/useTaxes";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { useInstallments } from "@/hooks/useInstallments";
 
 export default function Dashboard() {
-  const { obligations, isLoading: isLoadingObligations } = useObligations();
-  const { taxes, isLoading: isLoadingTaxes } = useTaxes();
+  const { deadlines, isLoading: isLoadingDeadlines } = useDeadlines();
   const { installments, isLoading: isLoadingInstallments } = useInstallments();
 
-  const isLoading = isLoadingObligations || isLoadingTaxes || isLoadingInstallments;
+  const isLoading = isLoadingDeadlines || isLoadingInstallments;
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
   }
 
-  const allItems = [...obligations, ...taxes, ...installments];
+  const allItems = [...deadlines, ...installments];
 
   const totalItems = allItems.length;
   const completedItems = allItems.filter((item) => item.status === "completed" || item.status === "paid").length;
@@ -30,7 +29,7 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Visão geral das obrigações e impostos
+          Visão geral de todos os prazos
         </p>
       </div>
 
@@ -66,7 +65,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AlertsCard obligations={allItems} />
+        <AlertsCard items={allItems} />
         
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-card p-6">

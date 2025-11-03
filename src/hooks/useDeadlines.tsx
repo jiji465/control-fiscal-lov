@@ -1,35 +1,34 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export interface Tax {
+export interface Deadline {
   id: string;
   user_id?: string;
   client_id: string;
-  tax_type_name: string;
+  title: string;
   description?: string;
-  amount?: number;
   due_date: string;
-  paid_at?: string;
-  status: "pending" | "paid" | "overdue";
+  completed_at?: string;
+  status: "pending" | "in_progress" | "completed" | "overdue";
   recurrence: "none" | "monthly" | "quarterly" | "semiannual" | "annual";
-  responsible?: string;
+  type: "obligation" | "tax";
   notes?: string;
-  weekend_handling: "advance" | "postpone" | "next_business_day";
-  original_due_date?: string;
+  responsible?: string;
   created_at: string;
   updated_at: string;
 }
 
-export function useTaxes() {
+export function useDeadlines() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: taxes = [], isLoading } = useQuery({
-    queryKey: ["taxes"],
+  const { data: deadlines = [], isLoading } = useQuery({
+    queryKey: ["deadlines"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("taxes")
+        .from("obligations")
         .select(`
           *,
           clients (
@@ -40,15 +39,15 @@ export function useTaxes() {
         .order("due_date", { ascending: true });
 
       if (error) throw error;
-      return data as (Tax & { clients: { id: string; name: string } | null })[];
+      return data as (Deadline & { clients: { id: string; name: string } | null; })[];
     },
   });
 
-  const createTax = useMutation({
-    mutationFn: async (tax: Omit<Tax, "id" | "user_id" | "created_at" | "updated_at">) => {
+  const createDeadline = useMutation({
+    mutationFn: async (deadline: Omit<Deadline, "id" | "user_id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
-        .from("taxes")
-        .insert([tax])
+        .from("obligations")
+        .insert([deadline])
         .select()
         .single();
 
@@ -56,22 +55,22 @@ export function useTaxes() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["taxes"] });
-      toast({ title: "Imposto criado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+      toast({ title: "Prazo criado com sucesso!" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao criar imposto",
+        title: "Erro ao criar prazo",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const updateTax = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Tax> & { id: string }) => {
+  const updateDeadline = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Deadline> & { id: string }) => {
       const { data, error } = await supabase
-        .from("taxes")
+        .from("obligations")
         .update(updates)
         .eq("id", id)
         .select()
@@ -81,30 +80,30 @@ export function useTaxes() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["taxes"] });
-      toast({ title: "Imposto atualizado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+      toast({ title: "Prazo atualizado com sucesso!" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao atualizar imposto",
+        title: "Erro ao atualizar prazo",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deleteTax = useMutation({
+  const deleteDeadline = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("taxes").delete().eq("id", id);
+      const { error } = await supabase.from("obligations").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["taxes"] });
-      toast({ title: "Imposto excluído com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+      toast({ title: "Prazo excluído com sucesso!" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao excluir imposto",
+        title: "Erro ao excluir prazo",
         description: error.message,
         variant: "destructive",
       });
@@ -112,10 +111,10 @@ export function useTaxes() {
   });
 
   return {
-    taxes,
+    deadlines,
     isLoading,
-    createTax,
-    updateTax,
-    deleteTax,
+    createDeadline,
+    updateDeadline,
+    deleteDeadline,
   };
 }
