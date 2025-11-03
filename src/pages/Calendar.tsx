@@ -446,7 +446,7 @@ export default function Calendar() {
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mr-4 pr-5">
             <div className="space-y-4 py-4">
-              {Object.entries(groupedDayItems).map(([type, items]) => (
+              {(Object.entries(groupedDayItems) as [string, any[]][]).map(([type, items]) => (
                 <div key={type}>
                   <h3 className="text-lg font-semibold mb-3 capitalize flex items-center gap-2">
                     {type === 'obligation' && <CalendarIcon className="h-5 w-5 text-primary" />}

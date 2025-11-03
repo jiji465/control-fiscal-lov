@@ -75,7 +75,7 @@ export function DeadlineEditForm({
       recurrence: deadline.recurrence,
       notes: deadline.notes || "",
       responsible: deadline.responsible || "",
-      weekend_handling: deadline.weekend_handling || "next_business_day",
+      weekend_handling: (deadline.weekend_handling as "advance" | "postpone" | "next_business_day") || "next_business_day",
     },
   });
 
@@ -91,7 +91,7 @@ export function DeadlineEditForm({
         recurrence: deadline.recurrence,
         notes: deadline.notes || "",
         responsible: deadline.responsible || "",
-        weekend_handling: deadline.weekend_handling || "next_business_day",
+        weekend_handling: (deadline.weekend_handling as "advance" | "postpone" | "next_business_day") || "next_business_day",
       });
     }
   }, [open, deadline, form]);
@@ -322,7 +322,7 @@ export function DeadlineEditForm({
                   <FormItem>
                     <FormLabel>Tratamento de Final de Semana</FormLabel>
                     <Select
-                      onValuechange={field.onChange}
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>

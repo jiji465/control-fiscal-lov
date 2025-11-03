@@ -16,6 +16,8 @@ export interface Deadline {
   type: "obligation" | "tax";
   notes?: string;
   responsible?: string;
+  weekend_handling?: string;
+  original_due_date?: string;
   created_at: string;
   updated_at: string;
 }

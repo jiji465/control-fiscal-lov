@@ -18,20 +18,20 @@ export function useTaxTypes() {
     queryKey: ["tax_types"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tax_types")
+        .from("tax_types" as any)
         .select("*")
         .order("name", { ascending: true });
 
       if (error) throw error;
-      return data as TaxType[];
+      return data as unknown as TaxType[];
     },
   });
 
   const createTaxType = useMutation({
     mutationFn: async (taxType: Omit<TaxType, "id" | "user_id" | "created_at">) => {
       const { data, error } = await supabase
-        .from("tax_types")
-        .insert([taxType])
+        .from("tax_types" as any)
+        .insert([taxType] as any)
         .select()
         .single();
 
@@ -54,8 +54,8 @@ export function useTaxTypes() {
   const updateTaxType = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TaxType> & { id: string }) => {
       const { data, error } = await supabase
-        .from("tax_types")
-        .update(updates)
+        .from("tax_types" as any)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
@@ -78,7 +78,7 @@ export function useTaxTypes() {
 
   const deleteTaxType = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("tax_types").delete().eq("id", id);
+      const { error } = await supabase.from("tax_types" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

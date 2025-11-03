@@ -53,7 +53,13 @@ export function ClientForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await createClient.mutateAsync(values);
+    await createClient.mutateAsync({
+      name: values.name,
+      document: values.document,
+      tax_regime: values.tax_regime,
+      email: values.email || undefined,
+      phone: values.phone || undefined,
+    });
   };
 
   useEffect(() => {

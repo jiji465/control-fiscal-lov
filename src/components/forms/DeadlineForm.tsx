@@ -123,6 +123,7 @@ export function DeadlineForm() {
           total_installments: totalInstallments,
           due_date: installmentDueDate,
           status: "pending",
+          amount: 0,
         });
       }
     }

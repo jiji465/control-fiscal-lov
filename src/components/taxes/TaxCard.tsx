@@ -2,7 +2,7 @@
 import { CheckCircle2, Edit, Trash2, User, FileText } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WeekendBadge } from "@/components/shared/WeekendBadge";
-import { useTaxes } from "@/hooks/useTaxes";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { format, parseISO, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -12,29 +12,29 @@ interface TaxCardProps {
 }
 
 export function TaxCard({ tax, onEdit }: TaxCardProps) {
-  const { updateTax, deleteTax } = useTaxes();
+  const { updateDeadline, deleteDeadline } = useDeadlines();
   const dueDate = parseISO(tax.due_date);
   const isOverdue = isPast(dueDate) && tax.status === "pending";
 
   const handleMarkAsCompleted = async () => {
-    await updateTax.mutateAsync({
+    await updateDeadline.mutateAsync({
       id: tax.id,
-      status: "completed",
-      paid_at: new Date().toISOString(),
+      status: "completed" as const,
+      completed_at: new Date().toISOString(),
     });
   };
 
   const handleMarkAsPending = async () => {
-    await updateTax.mutateAsync({
+    await updateDeadline.mutateAsync({
       id: tax.id,
-      status: "pending",
-      paid_at: null,
+      status: "pending" as const,
+      completed_at: undefined,
     });
   };
 
   const handleDelete = async () => {
     if (confirm("Deseja realmente excluir este imposto?")) {
-      await deleteTax.mutateAsync(tax.id);
+      await deleteDeadline.mutateAsync(tax.id);
     }
   };
 
@@ -107,39 +107,39 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
         <div className="pt-2 border-t">
           <div className="flex gap-2">
             {tax.status === "pending" ? (
-              <button
-                onClick={handleMarkAsCompleted}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3 flex-1"
-                disabled={updateTax.isPending}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Marcar como Concluído
-              </button>
-            ) : (
-              <button
-                onClick={handleMarkAsPending}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 flex-1"
-                disabled={updateTax.isPending}
-              >
-                Marcar como Pendente
-              </button>
-            )}
-
             <button
-              onClick={() => onEdit?.(tax)}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-              disabled={updateTax.isPending}
+              onClick={handleMarkAsCompleted}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3 flex-1"
+              disabled={updateDeadline.isPending}
             >
-              <Edit className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              Marcar como Concluído
             </button>
-
+          ) : (
             <button
-              onClick={handleDelete}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-              disabled={deleteTax.isPending}
+              onClick={handleMarkAsPending}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 flex-1"
+              disabled={updateDeadline.isPending}
             >
-              <Trash2 className="h-4 w-4" />
+              Marcar como Pendente
             </button>
+          )}
+
+          <button
+            onClick={() => onEdit?.(tax)}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+            disabled={updateDeadline.isPending}
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={handleDelete}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+            disabled={deleteDeadline.isPending}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
           </div>
         </div>
       </div>

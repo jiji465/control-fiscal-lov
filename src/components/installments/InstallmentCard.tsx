@@ -16,7 +16,6 @@ interface InstallmentCardProps {
 
 const statusConfig = {
   pending: { label: "Pendente", variant: "secondary" as const },
-  completed: { label: "Concluído", variant: "default" as const },
   paid: { label: "Concluído", variant: "default" as const },
   overdue: { label: "Atrasado", variant: "destructive" as const },
 };
@@ -30,12 +29,12 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
   const isWeekendDue = isWeekend(new Date(installment.due_date));
   const isOverdue = isPast(new Date(installment.due_date)) && installment.status === "pending";
 
-  const handleStatusChange = async (newStatus: "pending" | "completed" | "overdue") => {
+  const handleStatusChange = async (newStatus: "pending" | "paid" | "overdue") => {
     try {
       await updateInstallment.mutateAsync({
         id: installment.id,
         status: newStatus,
-        paid_at: newStatus === "completed" ? new Date().toISOString() : null,
+        paid_at: newStatus === "paid" ? new Date().toISOString() : null,
       });
     } catch (error) {
       toast({
@@ -123,13 +122,13 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
               variant="default" 
               size="sm" 
               className="flex-1"
-              onClick={() => handleStatusChange("completed")}
+              onClick={() => handleStatusChange("paid")}
               disabled={updateInstallment.isPending}
             >
               Marcar como Concluído
             </Button>
           )}
-          {(installment.status === "paid" || installment.status === "completed") && (
+          {(installment.status === "paid") && (
             <Button 
               variant="outline" 
               size="sm" 
