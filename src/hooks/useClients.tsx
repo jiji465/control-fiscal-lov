@@ -42,8 +42,11 @@ export function useClients() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+    onSuccess: (newClient) => {
+      queryClient.setQueryData(["clients"], (oldData: Client[] = []) => [
+        ...oldData,
+        newClient,
+      ]);
       toast({ title: "Cliente criado com sucesso!" });
     },
     onError: (error: Error) => {

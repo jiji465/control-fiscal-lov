@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -6,9 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useClients } from "@/hooks/useClients";
-import { useObligations } from "@/hooks/useObligations";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { useInstallments } from "@/hooks/useInstallments";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { adjustDueDateForWeekend, WeekendHandling } from "@/lib/weekendUtils";
 
 const installmentFormSchema = z.object({
-  obligation_id: z.string().min(1, "Selecione uma obrigação"),
+  obligation_id: z.string().min(1, "Selecione um prazo"),
   installment_number: z.coerce.number().min(1, "Número da parcela deve ser maior que 0"),
   total_installments: z.coerce.number().min(1, "Total de parcelas deve ser maior que 0"),
   due_date: z.date({ required_error: "Selecione a data de vencimento" }),
@@ -35,8 +34,7 @@ interface InstallmentFormProps {
 }
 
 export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
-  const { clients } = useClients();
-  const { obligations } = useObligations();
+  const { deadlines } = useDeadlines();
   const { createInstallment } = useInstallments();
 
   const form = useForm<InstallmentFormValues>({
@@ -51,7 +49,6 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
 
   const onSubmit = async (data: InstallmentFormValues) => {
     const adjustedDueDate = adjustDueDateForWeekend(data.due_date, data.weekend_handling as WeekendHandling);
-    const originalDueDate = data.due_date;
     
     await createInstallment.mutateAsync({
       obligation_id: data.obligation_id,
@@ -80,18 +77,18 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
               name="obligation_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Obrigação *</FormLabel>
+                  <FormLabel>Prazo *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma obrigação" />
+                        <SelectValue placeholder="Selecione um prazo" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {obligations.map((obligation) => (
-                        <SelectItem key={obligation.id} value={obligation.id}>
-                          {obligation.title}
-                          {obligation.clients && ` - ${obligation.clients.name}`}
+                      {deadlines.map((deadline) => (
+                        <SelectItem key={deadline.id} value={deadline.id}>
+                          {deadline.title}
+                          {deadline.clients && ` - ${deadline.clients.name}`}
                         </SelectItem>
                       ))}
                     </SelectContent>

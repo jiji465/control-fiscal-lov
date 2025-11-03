@@ -1,8 +1,9 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export interface Obligation {
+export interface Deadline {
   id: string;
   user_id?: string;
   client_id: string;
@@ -12,19 +13,19 @@ export interface Obligation {
   completed_at?: string;
   status: "pending" | "in_progress" | "completed" | "overdue";
   recurrence: "none" | "monthly" | "quarterly" | "semiannual" | "annual";
-  amount?: number;
+  type: "obligation" | "tax";
   notes?: string;
   responsible?: string;
   created_at: string;
   updated_at: string;
 }
 
-export function useObligations() {
+export function useDeadlines() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: obligations = [], isLoading } = useQuery({
-    queryKey: ["obligations"],
+  const { data: deadlines = [], isLoading } = useQuery({
+    queryKey: ["deadlines"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("obligations")
@@ -38,15 +39,15 @@ export function useObligations() {
         .order("due_date", { ascending: true });
 
       if (error) throw error;
-      return data as (Obligation & { clients: { id: string; name: string } | null; })[];
+      return data as (Deadline & { clients: { id: string; name: string } | null; })[];
     },
   });
 
-  const createObligation = useMutation({
-    mutationFn: async (obligation: Omit<Obligation, "id" | "user_id" | "created_at" | "updated_at">) => {
+  const createDeadline = useMutation({
+    mutationFn: async (deadline: Omit<Deadline, "id" | "user_id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
         .from("obligations")
-        .insert([obligation])
+        .insert([deadline])
         .select()
         .single();
 
@@ -54,20 +55,20 @@ export function useObligations() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["obligations"] });
-      toast({ title: "Obrigação criada com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+      toast({ title: "Prazo criado com sucesso!" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao criar obrigação",
+        title: "Erro ao criar prazo",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const updateObligation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Obligation> & { id: string }) => {
+  const updateDeadline = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Deadline> & { id: string }) => {
       const { data, error } = await supabase
         .from("obligations")
         .update(updates)
@@ -79,30 +80,30 @@ export function useObligations() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["obligations"] });
-      toast({ title: "Obrigação atualizada com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+      toast({ title: "Prazo atualizado com sucesso!" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao atualizar obrigação",
+        title: "Erro ao atualizar prazo",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deleteObligation = useMutation({
+  const deleteDeadline = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("obligations").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["obligations"] });
-      toast({ title: "Obrigação excluída com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+      toast({ title: "Prazo excluído com sucesso!" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao excluir obrigação",
+        title: "Erro ao excluir prazo",
         description: error.message,
         variant: "destructive",
       });
@@ -110,10 +111,10 @@ export function useObligations() {
   });
 
   return {
-    obligations,
+    deadlines,
     isLoading,
-    createObligation,
-    updateObligation,
-    deleteObligation,
+    createDeadline,
+    updateDeadline,
+    deleteDeadline,
   };
 }

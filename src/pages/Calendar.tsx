@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameMonth, isToday, addMonths, subMonths, getDay, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -5,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle } from "lucide-react";
-import { useObligations } from "@/hooks/useObligations";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { useInstallments } from "@/hooks/useInstallments";
-import { useTaxes } from "@/hooks/useTaxes";
 import {
   Dialog,
   DialogContent,
@@ -36,26 +36,24 @@ const typeColors = {
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [filter, setFilter] = useState<"all" | "obligations" | "taxes" | "installments">("all");
+  const [filter, setFilter] = useState<"all" | "obligation" | "tax" | "installments">("all");
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
   const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
   const [selectedDayItems, setSelectedDayItems] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const { obligations } = useObligations();
+  const { deadlines } = useDeadlines();
   const { installments } = useInstallments();
-  const { taxes } = useTaxes();
 
   const allItems = [
-    ...obligations.map((o: any) => ({ ...o, type: 'obligation' })),
-    ...taxes.map((t: any) => ({ ...t, type: 'tax' })),
+    ...deadlines,
     ...installments.map((i: any) => ({ ...i, type: 'installment' })),
   ];
 
   const filteredItems = allItems.filter(item => {
     if (filter === "all") return true;
-    if (filter === "obligations") return item.type === "obligation";
-    if (filter === "taxes") return item.type === "tax";
+    if (filter === "obligation") return item.type === "obligation";
+    if (filter === "tax") return item.type === "tax";
     if (filter === "installments") return item.type === "installment";
     return true;
   });
@@ -75,9 +73,6 @@ export default function Calendar() {
       title = `Parcela ${item.installment_number}/${item.total_installments}`;
       if (item.obligations?.title) title += ` - ${item.obligations.title}`;
       client = item.obligations?.clients;
-    } else if (item.type === 'tax') {
-      title = item.tax_type_name;
-      client = item.clients;
     } else {
       title = item.title;
       client = item.clients;
@@ -217,17 +212,17 @@ export default function Calendar() {
           Todos ({allItems.length})
         </Button>
         <Button
-          variant={filter === 'obligations' ? 'default' : 'outline'}
+          variant={filter === 'obligation' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter('obligations')}
+          onClick={() => setFilter('obligation')}
         >
           <CalendarIcon className="h-4 w-4 mr-2" />
           Obrigações ({obligationCount})
         </Button>
         <Button
-          variant={filter === 'taxes' ? 'default' : 'outline'}
+          variant={filter === 'tax' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter('taxes')}
+          onClick={() => setFilter('tax')}
         >
           <Receipt className="h-4 w-4 mr-2" />
           Impostos ({taxCount})
@@ -503,18 +498,14 @@ export default function Calendar() {
               Selecione o tipo de item que deseja criar para esta data.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-            <Link to={`/obrigações/novo?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <Link to={`/deadlines/new?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}&type=obligation`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
               <CalendarIcon className="h-8 w-8 mx-auto text-primary mb-2" />
               <p className="font-semibold text-sm">Obrigação</p>
             </Link>
-            <Link to={`/impostos/novo?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
+            <Link to={`/deadlines/new?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}&type=tax`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
               <Receipt className="h-8 w-8 mx-auto text-[hsl(var(--chart-2))] mb-2" />
               <p className="font-semibold text-sm">Imposto</p>
-            </Link>
-            <Link to={`/parcelamentos/novo?due_date=${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}`} className="text-center p-4 rounded-lg bg-card hover:bg-muted/50 transition-colors border">
-              <CreditCard className="h-8 w-8 mx-auto text-success mb-2" />
-              <p className="font-semibold text-sm">Parcelamento</p>
             </Link>
           </div>
         </DialogContent>

@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import { CheckCircle2, Edit, Trash2, User, FileText } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WeekendBadge } from "@/components/shared/WeekendBadge";
@@ -48,8 +47,8 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex flex-col space-y-1.5 p-6 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg truncate">{tax.title}</h3>
@@ -61,9 +60,9 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
           </div>
           <StatusBadge status={isOverdue ? "overdue" : tax.status} />
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-3">
+      <div className="p-6 pt-0 space-y-3">
         <div className="space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Vencimento:</span>
@@ -105,51 +104,45 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
           </div>
         )}
 
-        <div>
-          <div className="flex gap-2 pt-2 border-t">
+        <div className="pt-2 border-t">
+          <div className="flex gap-2">
             {tax.status === "pending" ? (
-              <Button
-                size="sm"
-                variant="default"
+              <button
                 onClick={handleMarkAsCompleted}
-                className="flex-1"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3 flex-1"
                 disabled={updateTax.isPending}
               >
                 <CheckCircle2 className="h-4 w-4 mr-1" />
                 Marcar como Concluído
-              </Button>
+              </button>
             ) : (
-              <Button
-                size="sm"
-                variant="outline"
+              <button
                 onClick={handleMarkAsPending}
-                className="flex-1"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 flex-1"
                 disabled={updateTax.isPending}
               >
                 Marcar como Pendente
-              </Button>
+              </button>
             )}
 
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               onClick={() => onEdit?.(tax)}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
               disabled={updateTax.isPending}
             >
               <Edit className="h-4 w-4" />
-            </Button>
+            </button>
 
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               onClick={handleDelete}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
               disabled={deleteTax.isPending}
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

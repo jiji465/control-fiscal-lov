@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,11 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
-import Obligations from "./pages/Obligations";
+import Deadlines from "./pages/Deadlines";
 import Clients from "./pages/Clients";
 import Calendar from "./pages/Calendar";
 import Installments from "./pages/Installments";
-import Taxes from "./pages/Taxes";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
@@ -23,8 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
-          <Route path="/obligations" element={<AppLayout><Obligations /></AppLayout>} />
-          <Route path="/taxes" element={<AppLayout><Taxes /></AppLayout>} />
+          <Route path="/deadlines" element={<AppLayout><Deadlines /></AppLayout>} />
           <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
           <Route path="/installments" element={<AppLayout><Installments /></AppLayout>} />
           <Route path="/calendar" element={<AppLayout><Calendar /></AppLayout>} />

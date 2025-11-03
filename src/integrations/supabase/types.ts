@@ -152,6 +152,7 @@ export type Database = {
           responsible: string | null
           status: Database["public"]["Enums"]["obligation_status"]
           title: string
+          type: "obligation" | "tax"
           updated_at: string
           user_id: string | null
           weekend_handling: string | null
@@ -171,6 +172,7 @@ export type Database = {
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
           title: string
+          type: "obligation" | "tax"
           updated_at?: string
           user_id?: string | null
           weekend_handling?: string | null
@@ -190,6 +192,7 @@ export type Database = {
           responsible?: string | null
           status?: Database["public"]["Enums"]["obligation_status"]
           title?: string
+          type?: "obligation" | "tax"
           updated_at?: string
           user_id?: string | null
           weekend_handling?: string | null
@@ -263,74 +266,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      taxes: {
-        Row: {
-          auto_created: boolean | null
-          client_id: string
-          created_at: string
-          description: string | null
-          due_date: string
-          id: string
-          notes: string | null
-          original_due_date: string | null
-          paid_at: string | null
-          parent_id: string | null
-          recurrence: string
-          responsible: string | null
-          status: string
-          title: string
-          updated_at: string
-          user_id: string | null
-          weekend_handling: string | null
-        }
-        Insert: {
-          auto_created?: boolean | null
-          client_id: string
-          created_at?: string
-          description?: string | null
-          due_date: string
-          id?: string
-          notes?: string | null
-          original_due_date?: string | null
-          paid_at?: string | null
-          parent_id?: string | null
-          recurrence?: string
-          responsible?: string | null
-          status?: string
-          title: string
-          updated_at?: string
-          user_id?: string | null
-          weekend_handling?: string | null
-        }
-        Update: {
-          auto_created?: boolean | null
-          client_id?: string
-          created_at?: string
-          description?: string | null
-          due_date?: string
-          id?: string
-          notes?: string | null
-          original_due_date?: string | null
-          paid_at?: string | null
-          parent_id?: string | null
-          recurrence?: string
-          responsible?: string | null
-          status?: string
-          title?: string
-          updated_at?: string
-          user_id?: string | null
-          weekend_handling?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxes_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {

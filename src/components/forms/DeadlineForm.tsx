@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Loader2 } from "lucide-react";
-import { useObligations } from "@/hooks/useObligations";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { useClients } from "@/hooks/useClients";
 import { useInstallments } from "@/hooks/useInstallments";
 import { addMonths, format, parseISO } from "date-fns";
@@ -39,6 +40,7 @@ import { useState } from "react";
 
 const formSchema = z.object({
   title: z.string().min(1, "Título é obrigatório"),
+  type: z.enum(["obligation", "tax"]),
   description: z.string().optional(),
   client_id: z.string().min(1, "Cliente é obrigatório"),
   due_date: z.string().min(1, "Data de vencimento é obrigatória"),
@@ -50,15 +52,16 @@ const formSchema = z.object({
   installment_count: z.string().optional(),
 });
 
-export function ObligationForm() {
+export function DeadlineForm() {
   const [open, setOpen] = useState(false);
-  const { createObligation } = useObligations();
+  const { createDeadline } = useDeadlines();
   const { clients } = useClients();
   const { createInstallment } = useInstallments();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      type: "obligation",
       recurrence: "none",
       weekend_handling: "next_business_day",
       has_installments: false,
@@ -89,8 +92,9 @@ export function ObligationForm() {
         )
       : values.due_date;
 
-    const obligation = await createObligation.mutateAsync({
+    const deadline = await createDeadline.mutateAsync({
       title: values.title,
+      type: values.type,
       description: values.description,
       client_id: values.client_id,
       due_date: adjustedDueDate,
@@ -114,7 +118,7 @@ export function ObligationForm() {
           "yyyy-MM-dd"
         );
         await createInstallment.mutateAsync({
-          obligation_id: obligation.id,
+          obligation_id: deadline.id,
           installment_number: i,
           total_installments: totalInstallments,
           due_date: installmentDueDate,
@@ -132,15 +136,40 @@ export function ObligationForm() {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Nova Obrigação
+          Novo Prazo
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Obrigação Fiscal</DialogTitle>
+          <DialogTitle>Novo Prazo Fiscal</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="obligation">Obrigação</SelectItem>
+                      <SelectItem value="tax">Imposto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="title"
@@ -166,7 +195,7 @@ export function ObligationForm() {
                   <FormLabel>Descrição</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Descrição detalhada da obrigação"
+                      placeholder="Descrição detalhada do prazo"
                       rows={3}
                       {...field}
                     />
@@ -303,7 +332,7 @@ export function ObligationForm() {
                   <FormLabel>Responsável</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Nome do responsável pela obrigação"
+                      placeholder="Nome do responsável pelo prazo"
                       {...field}
                     />
                   </FormControl>
@@ -320,7 +349,7 @@ export function ObligationForm() {
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Notas adicionais sobre esta obrigação"
+                      placeholder="Notas adicionais sobre este prazo"
                       rows={2}
                       {...field}
                     />
@@ -382,12 +411,12 @@ export function ObligationForm() {
               </Button>
               <Button
                 type="submit"
-                disabled={createObligation.isPending}
+                disabled={createDeadline.isPending}
               >
-                {createObligation.isPending && (
+                {createDeadline.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Criar Obrigação
+                Criar Prazo
               </Button>
             </div>
           </form>

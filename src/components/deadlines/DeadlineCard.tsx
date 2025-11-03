@@ -1,16 +1,17 @@
-import { CalendarIcon, Building2, Repeat, CheckCircle2, User, AlertTriangle, Edit } from "lucide-react";
+
+import { CalendarIcon, Building2, Repeat, CheckCircle2, User, AlertTriangle, Edit, FileText } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Obligation, useObligations } from "@/hooks/useObligations";
+import { Deadline, useDeadlines } from "@/hooks/useDeadlines";
 import { format, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
-import { ObligationDetails } from "./ObligationDetails";
-import { ObligationEditForm } from "@/components/forms/ObligationEditForm";
+import { DeadlineDetails } from "./DeadlineDetails";
+import { DeadlineEditForm } from "@/components/forms/DeadlineEditForm";
 
-interface ObligationCardProps {
-  obligation: Obligation & { clients?: { id: string; name: string } | null; };
+interface DeadlineCardProps {
+  deadline: Deadline & { clients?: { id: string; name: string } | null; };
 }
 
 const statusConfig = {
@@ -28,17 +29,17 @@ const recurrenceLabels = {
   annual: "Anual",
 };
 
-export function ObligationCard({ obligation }: ObligationCardProps) {
-  const config = statusConfig[obligation.status];
+export function DeadlineCard({ deadline }: DeadlineCardProps) {
+  const config = statusConfig[deadline.status];
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const { updateObligation } = useObligations();
-  const isWeekendDue = obligation.due_date ? isWeekend(new Date(obligation.due_date)) : false;
+  const { updateDeadline } = useDeadlines();
+  const isWeekendDue = deadline.due_date ? isWeekend(new Date(deadline.due_date)) : false;
 
   const handleQuickStatusChange = async (e: React.MouseEvent, newStatus: string) => {
     e.stopPropagation();
-    await updateObligation.mutateAsync({
-      id: obligation.id,
+    await updateDeadline.mutateAsync({
+      id: deadline.id,
       status: newStatus as any,
       completed_at: newStatus === "completed" ? new Date().toISOString() : undefined,
     });
@@ -49,28 +50,31 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
       <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-200 bg-card/50 cursor-pointer" onClick={() => setDetailsOpen(true)}>
       <CardHeader className="pb-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-medium text-foreground leading-tight">{obligation.title}</h3>
-          <Badge variant={config.badgeVariant} className="font-normal">{config.label}</Badge>
+          <h3 className="text-base font-medium text-foreground leading-tight">{deadline.title}</h3>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant={config.badgeVariant} className="font-normal">{config.label}</Badge>
+            <Badge variant={deadline.type === 'tax' ? 'destructive' : 'outline'} className="font-normal text-xs">{deadline.type === 'tax' ? 'Imposto' : 'Obrigação'}</Badge>
+          </div>
         </div>
-        {obligation.description && (
-          <p className="text-sm text-muted-foreground font-normal mt-1">{obligation.description}</p>
+        {deadline.description && (
+          <p className="text-sm text-muted-foreground font-normal mt-1 line-clamp-2">{deadline.description}</p>
         )}
       </CardHeader>
       
       <CardContent className="space-y-2 pb-3">
-        {obligation.clients && (
+        {deadline.clients && (
           <div className="flex items-center gap-2 text-sm">
             <Building2 className="h-4 w-4 text-muted-foreground" />
-            <span>{obligation.clients.name}</span>
+            <span>{deadline.clients.name}</span>
           </div>
         )}
         
-        {obligation.due_date && (
+        {deadline.due_date && (
           <div className="flex items-center gap-2 text-sm">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center gap-2">
               <span>
-                Vencimento: {format(new Date(obligation.due_date), "dd/MM/yyyy", { locale: ptBR })}
+                Vencimento: {format(new Date(deadline.due_date), "dd/MM/yyyy", { locale: ptBR })}
               </span>
               {isWeekendDue && (
                 <div className="flex items-center gap-1 text-warning" title="Vence no final de semana">
@@ -82,25 +86,25 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
           </div>
         )}
 
-        {obligation.responsible && (
+        {deadline.responsible && (
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-muted-foreground" />
-            <span>{obligation.responsible}</span>
+            <span>{deadline.responsible}</span>
           </div>
         )}
 
-        {obligation.recurrence !== "none" && (
+        {deadline.recurrence !== "none" && (
           <div className="flex items-center gap-2 text-sm">
             <Repeat className="h-4 w-4 text-muted-foreground" />
-            <span>{recurrenceLabels[obligation.recurrence]}</span>
+            <span>{recurrenceLabels[deadline.recurrence]}</span>
           </div>
         )}
 
-        {obligation.completed_at && (
+        {deadline.completed_at && (
           <div className="flex items-center gap-2 text-sm text-success">
             <CheckCircle2 className="h-4 w-4" />
             <span>
-              Concluída em {format(new Date(obligation.completed_at), "dd/MM/yyyy", { locale: ptBR })}
+              Concluída em {format(new Date(deadline.completed_at), "dd/MM/yyyy", { locale: ptBR })}
             </span>
           </div>
         )}
@@ -108,7 +112,7 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
 
       <CardFooter className="pt-3 border-t flex flex-col gap-2">
         <div className="flex gap-2 w-full">
-          {obligation.status === "pending" && (
+          {deadline.status === "pending" && (
             <>
               <Button 
                 variant="outline" 
@@ -128,7 +132,7 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
               </Button>
             </>
           )}
-          {obligation.status === "in_progress" && (
+          {deadline.status === "in_progress" && (
             <Button 
               variant="default" 
               size="sm" 
@@ -138,7 +142,7 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
               Concluir
             </Button>
           )}
-          {obligation.status === "completed" && (
+          {deadline.status === "completed" && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -162,14 +166,14 @@ export function ObligationCard({ obligation }: ObligationCardProps) {
       </CardFooter>
     </Card>
     
-    <ObligationDetails 
-      obligation={obligation} 
+    <DeadlineDetails
+      deadline={deadline}
       open={detailsOpen} 
       onOpenChange={setDetailsOpen} 
     />
     
-    <ObligationEditForm
-      obligation={obligation}
+    <DeadlineEditForm
+      deadline={deadline}
       open={editOpen}
       onOpenChange={setEditOpen}
     />

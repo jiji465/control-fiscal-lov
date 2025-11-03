@@ -1,8 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useObligations } from "@/hooks/useObligations";
-import { useTaxes } from "@/hooks/useTaxes";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { useInstallments } from "@/hooks/useInstallments";
 import { useClients } from "@/hooks/useClients";
 import { useState } from "react";
@@ -12,12 +12,11 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning
 
 export default function Analytics() {
   const [period, setPeriod] = useState("all");
-  const { obligations } = useObligations();
-  const { taxes } = useTaxes();
+  const { deadlines } = useDeadlines();
   const { installments } = useInstallments();
   const { clients } = useClients();
 
-  const allItems = [...obligations, ...taxes, ...installments];
+  const allItems = [...deadlines, ...installments];
 
   // Métricas principais
   const totalItems = allItems.length;
@@ -46,24 +45,19 @@ export default function Analytics() {
     };
   }).filter(c => c.total > 0);
 
-  // Dados por tipo de imposto
-  const taxTypeData = taxes.reduce((acc: any[], tax) => {
-    const existing = acc.find(item => item.name === tax.title);
-    if (existing) {
-      existing.value++;
-    } else {
-      acc.push({ name: tax.title, value: 1 });
-    }
-    return acc;
-  }, []);
+  // Dados por tipo de prazo
+  const deadlineTypeData = [
+    { name: 'Obrigações', value: deadlines.filter(d => d.type === 'obligation').length },
+    { name: 'Impostos', value: deadlines.filter(d => d.type === 'tax').length },
+  ].filter(d => d.value > 0);
 
   // Dados por recorrência
   const recurrenceData = [
-    { name: 'Mensal', value: obligations.filter(o => o.recurrence === 'monthly').length },
-    { name: 'Trimestral', value: obligations.filter(o => o.recurrence === 'quarterly').length },
-    { name: 'Semestral', value: obligations.filter(o => o.recurrence === 'semiannual').length },
-    { name: 'Anual', value: obligations.filter(o => o.recurrence === 'annual').length },
-    { name: 'Única', value: obligations.filter(o => o.recurrence === 'none').length },
+    { name: 'Mensal', value: deadlines.filter(o => o.recurrence === 'monthly').length },
+    { name: 'Trimestral', value: deadlines.filter(o => o.recurrence === 'quarterly').length },
+    { name: 'Semestral', value: deadlines.filter(o => o.recurrence === 'semiannual').length },
+    { name: 'Anual', value: deadlines.filter(o => o.recurrence === 'annual').length },
+    { name: 'Única', value: deadlines.filter(o => o.recurrence === 'none').length },
   ].filter(d => d.value > 0);
 
   return (
@@ -176,14 +170,14 @@ export default function Analytics() {
 
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-medium">Por Tipo de Imposto</CardTitle>
+            <CardTitle className="text-base font-medium">Por Tipo de Prazo</CardTitle>
           </CardHeader>
           <CardContent>
-            {taxTypeData.length > 0 ? (
+            {deadlineTypeData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={taxTypeData}
+                    data={deadlineTypeData}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -191,7 +185,7 @@ export default function Analytics() {
                     outerRadius={80}
                     label
                   >
-                    {taxTypeData.map((_, index) => (
+                    {deadlineTypeData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -251,10 +245,10 @@ export default function Analytics() {
         </Card>
       </div>
 
-      {/* Tabela de Obrigações por Cliente */}
+      {/* Tabela de Prazos por Cliente */}
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-medium">Obrigações por Cliente</CardTitle>
+          <CardTitle className="text-base font-medium">Prazos por Cliente</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

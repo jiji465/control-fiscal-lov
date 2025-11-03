@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, AlertCircle } from "lucide-react";
-import { useObligations, Obligation } from "@/hooks/useObligations";
+import { useDeadlines, Deadline } from "@/hooks/useDeadlines";
 import { useClients } from "@/hooks/useClients";
 import {
   Form,
@@ -35,6 +36,7 @@ import { format, parseISO } from "date-fns";
 
 const formSchema = z.object({
   title: z.string().min(1, "Título é obrigatório"),
+  type: z.enum(["obligation", "tax"]),
   description: z.string().optional(),
   client_id: z.string().min(1, "Cliente é obrigatório"),
   due_date: z.string().min(1, "Data de vencimento é obrigatória"),
@@ -45,52 +47,54 @@ const formSchema = z.object({
   weekend_handling: z.enum(["advance", "postpone", "next_business_day"]),
 });
 
-interface ObligationEditFormProps {
-  obligation: Obligation & {
+interface DeadlineEditFormProps {
+  deadline: Deadline & {
     clients?: { id: string; name: string } | null;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ObligationEditForm({
-  obligation,
+export function DeadlineEditForm({
+  deadline,
   open,
   onOpenChange,
-}: ObligationEditFormProps) {
-  const { updateObligation, deleteObligation } = useObligations();
+}: DeadlineEditFormProps) {
+  const { updateDeadline, deleteDeadline } = useDeadlines();
   const { clients } = useClients();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: obligation.title,
-      description: obligation.description || "",
-      client_id: obligation.client_id,
-      due_date: obligation.due_date,
-      status: obligation.status,
-      recurrence: obligation.recurrence,
-      notes: obligation.notes || "",
-      responsible: obligation.responsible || "",
-      weekend_handling: obligation.weekend_handling || "next_business_day",
+      title: deadline.title,
+      type: deadline.type,
+      description: deadline.description || "",
+      client_id: deadline.client_id,
+      due_date: deadline.due_date,
+      status: deadline.status,
+      recurrence: deadline.recurrence,
+      notes: deadline.notes || "",
+      responsible: deadline.responsible || "",
+      weekend_handling: deadline.weekend_handling || "next_business_day",
     },
   });
 
   useEffect(() => {
     if (open) {
       form.reset({
-        title: obligation.title,
-        description: obligation.description || "",
-        client_id: obligation.client_id,
-        due_date: obligation.due_date,
-        status: obligation.status,
-        recurrence: obligation.recurrence,
-        notes: obligation.notes || "",
-        responsible: obligation.responsible || "",
-        weekend_handling: obligation.weekend_handling || "next_business_day",
+        title: deadline.title,
+        type: deadline.type,
+        description: deadline.description || "",
+        client_id: deadline.client_id,
+        due_date: deadline.due_date,
+        status: deadline.status,
+        recurrence: deadline.recurrence,
+        notes: deadline.notes || "",
+        responsible: deadline.responsible || "",
+        weekend_handling: deadline.weekend_handling || "next_business_day",
       });
     }
-  }, [open, obligation, form]);
+  }, [open, deadline, form]);
 
   const watchedDueDate = form.watch("due_date");
   const watchedWeekendHandling = form.watch("weekend_handling");
@@ -114,8 +118,8 @@ export function ObligationEditForm({
         )
       : values.due_date;
 
-    await updateObligation.mutateAsync({
-      id: obligation.id,
+    await updateDeadline.mutateAsync({
+      id: deadline.id,
       ...values,
       due_date: adjustedDueDate,
       original_due_date: originalDueDate,
@@ -129,10 +133,10 @@ export function ObligationEditForm({
   const handleDelete = async () => {
     if (
       confirm(
-        "Tem certeza que deseja excluir esta obrigação? Esta ação não pode ser desfeita."
+        "Tem certeza que deseja excluir este prazo? Esta ação não pode ser desfeita."
       )
     ) {
-      await deleteObligation.mutateAsync(obligation.id);
+      await deleteDeadline.mutateAsync(deadline.id);
       onOpenChange(false);
     }
   };
@@ -141,10 +145,34 @@ export function ObligationEditForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Obrigação</DialogTitle>
+          <DialogTitle>Editar Prazo</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="obligation">Obrigação</SelectItem>
+                      <SelectItem value="tax">Imposto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="title"
@@ -294,7 +322,7 @@ export function ObligationEditForm({
                   <FormItem>
                     <FormLabel>Tratamento de Final de Semana</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValuechange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -353,9 +381,9 @@ export function ObligationEditForm({
                 type="button"
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={deleteObligation.isPending}
+                disabled={deleteDeadline.isPending}
               >
-                {deleteObligation.isPending && (
+                {deleteDeadline.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 Excluir
@@ -368,8 +396,8 @@ export function ObligationEditForm({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={updateObligation.isPending}>
-                  {updateObligation.isPending && (
+                <Button type="submit" disabled={updateDeadline.isPending}>
+                  {updateDeadline.isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   Salvar Alterações
