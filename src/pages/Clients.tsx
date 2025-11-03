@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ClientForm } from "@/components/forms/ClientForm";
 import { useClients } from "@/hooks/useClients";
 import { format } from "date-fns";
@@ -52,13 +52,12 @@ export default function Clients() {
           </div>
         ) : (
           filteredClients.map((client) => (
-            <div key={client.id}>
-              <Card className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <h3 className="font-semibold">{client.name}</h3>
+            <div key={client.id} className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col space-y-1.5 p-6">
+                <h3 className="font-semibold">{client.name}</h3>
                 <p className="text-sm text-muted-foreground">{client.document}</p>
-              </CardHeader>
-              <CardContent className="space-y-2">
+              </div>
+              <div className="p-6 pt-0 space-y-2">
                 {client.email && (
                   <p className="text-sm">
                     <span className="text-muted-foreground">Email:</span> {client.email}
@@ -77,8 +76,7 @@ export default function Clients() {
                     Ver Detalhes
                   </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
             </div>
           ))
         )}

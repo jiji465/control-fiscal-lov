@@ -1,8 +1,7 @@
+
 import { useState } from "react";
 import { CalendarIcon, Building2, AlertTriangle, CheckCircle2, Edit, Trash2 } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { format, isWeekend, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useInstallments } from "@/hooks/useInstallments";
@@ -61,8 +60,8 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
 
   return (
     <>
-      <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-200 bg-card/50">
-        <CardHeader className="pb-4 space-y-3">
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-200 bg-card/50">
+        <div className="flex flex-col space-y-1.5 p-6 pb-4">
           <div className="flex items-start justify-between gap-2">
             <div>
               <h3 className="text-base font-medium text-foreground leading-tight">
@@ -76,9 +75,9 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
             </div>
             <Badge variant={config.variant}>{config.label}</Badge>
           </div>
-        </CardHeader>
+        </div>
         
-        <CardContent className="space-y-2 pb-3">
+        <div className="p-6 pt-0 space-y-2 pb-3">
           {installment.obligations?.clients && (
             <div className="flex items-center gap-2 text-sm">
               <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -115,49 +114,43 @@ export function InstallmentCard({ installment }: InstallmentCardProps) {
               <span>Parcela atrasada!</span>
             </div>
           )}
-        </CardContent>
+        </div>
 
-        <CardFooter className="pt-3 border-t flex gap-2">
+        <div className="flex items-center p-6 pt-3 border-t gap-2">
           {installment.status === "pending" && (
-            <Button 
-              variant="default" 
-              size="sm" 
-              className="flex-1"
+            <button
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3 flex-1"
               onClick={() => handleStatusChange("completed")}
               disabled={updateInstallment.isPending}
             >
               Marcar como Concluído
-            </Button>
+            </button>
           )}
           {(installment.status === "paid" || installment.status === "completed") && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1"
+            <button
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 flex-1"
               onClick={() => handleStatusChange("pending")}
               disabled={updateInstallment.isPending}
             >
               Reverter para Pendente
-            </Button>
+            </button>
           )}
           
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
             onClick={() => setShowEditDialog(true)}
           >
             <Edit className="h-4 w-4" />
-          </Button>
+          </button>
 
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="h-4 w-4" />
-          </Button>
-        </CardFooter>
-      </Card>
+          </button>
+        </div>
+      </div>
 
       <InstallmentEditForm
         installment={installment}
