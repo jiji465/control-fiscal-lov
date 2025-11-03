@@ -9,6 +9,8 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, variant = "default" }: StatusBadgeProps) {
+  const effectiveStatus = status === "paid" ? "completed" : status;
+
   const config = {
     pending: {
       label: "Pendente",
@@ -25,11 +27,6 @@ export function StatusBadge({ status, variant = "default" }: StatusBadgeProps) {
       icon: CheckCircle2,
       className: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700",
     },
-    paid: {
-      label: "Pago",
-      icon: CheckCircle2,
-      className: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700",
-    },
     overdue: {
       label: "Atrasado",
       icon: AlertCircle,
@@ -37,7 +34,7 @@ export function StatusBadge({ status, variant = "default" }: StatusBadgeProps) {
     },
   };
 
-  const { label, icon: Icon, className } = config[status];
+  const { label, icon: Icon, className } = config[effectiveStatus];
 
   if (variant === "compact") {
     return (

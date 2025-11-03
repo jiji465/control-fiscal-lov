@@ -2,19 +2,27 @@ import { FileText, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
 import { useObligations } from "@/hooks/useObligations";
+import { useTaxes } from "@/hooks/useTaxes";
+import { useInstallments } from "@/hooks/useInstallments";
 
 export default function Dashboard() {
-  const { obligations, isLoading } = useObligations();
+  const { obligations, isLoading: isLoadingObligations } = useObligations();
+  const { taxes, isLoading: isLoadingTaxes } = useTaxes();
+  const { installments, isLoading: isLoadingInstallments } = useInstallments();
+
+  const isLoading = isLoadingObligations || isLoadingTaxes || isLoadingInstallments;
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
   }
 
-  const totalObligations = obligations.length;
-  const completedObligations = obligations.filter((o) => o.status === "completed").length;
-  const overdueObligations = obligations.filter((o) => o.status === "overdue").length;
-  const pendingObligations = obligations.filter(
-    (o) => o.status === "pending" || o.status === "in_progress"
+  const allItems = [...obligations, ...taxes, ...installments];
+
+  const totalItems = allItems.length;
+  const completedItems = allItems.filter((item) => item.status === "completed" || item.status === "paid").length;
+  const overdueItems = allItems.filter((item) => item.status === "overdue").length;
+  const pendingItems = allItems.filter(
+    (item) => item.status === "pending" || item.status === "in_progress"
   ).length;
 
   return (
@@ -28,47 +36,47 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total de Obrigações"
-          value={totalObligations}
-          description="Cadastradas no sistema"
+          title="Total de Prazos"
+          value={totalItems}
+          description="Cadastrados no sistema"
           icon={FileText}
           variant="default"
         />
         <StatsCard
-          title="Concluídas"
-          value={completedObligations}
-          description={`${Math.round((completedObligations / totalObligations) * 100)}% do total`}
+          title="Concluídos"
+          value={completedItems}
+          description={`${Math.round((completedItems / totalItems) * 100)}% do total`}
           icon={CheckCircle}
           variant="success"
         />
         <StatsCard
-          title="Atrasadas"
-          value={overdueObligations}
+          title="Atrasados"
+          value={overdueItems}
           description="Requerem atenção imediata"
           icon={AlertTriangle}
           variant="danger"
         />
         <StatsCard
-          title="Em Andamento"
-          value={pendingObligations}
-          description="Pendentes e em progresso"
+          title="Pendentes"
+          value={pendingItems}
+          description="Aguardando conclusão"
           icon={Clock}
           variant="warning"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AlertsCard obligations={obligations} />
+        <AlertsCard obligations={allItems} />
         
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-card p-6">
             <h3 className="font-semibold mb-4">Resumo por Status</h3>
             <div className="space-y-3">
               {[
-                { label: "Pendentes", value: obligations.filter(o => o.status === "pending").length, color: "bg-pending" },
-                { label: "Em Andamento", value: obligations.filter(o => o.status === "in_progress").length, color: "bg-warning" },
-                { label: "Concluídas", value: completedObligations, color: "bg-success" },
-                { label: "Atrasadas", value: overdueObligations, color: "bg-destructive" },
+                { label: "Pendentes", value: allItems.filter(item => item.status === "pending").length, color: "bg-pending" },
+                { label: "Em Andamento", value: allItems.filter(item => item.status === "in_progress").length, color: "bg-warning" },
+                { label: "Concluídos", value: completedItems, color: "bg-success" },
+                { label: "Atrasados", value: overdueItems, color: "bg-destructive" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

@@ -40,7 +40,7 @@ export default function Installments() {
   const stats = {
     total: installments.length,
     pending: installments.filter(i => i.status === "pending").length,
-    paid: installments.filter(i => i.status === "paid").length,
+    completed: installments.filter(i => i.status === "paid" || i.status === "completed").length,
     overdue: installments.filter(i => i.status === "overdue").length,
   };
 
@@ -82,11 +82,11 @@ export default function Installments() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Pagas</CardTitle>
+            <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">{stats.paid}</div>
-            <p className="text-xs text-muted-foreground">Já quitadas</p>
+            <div className="text-2xl font-bold text-success">{stats.completed}</div>
+            <p className="text-xs text-muted-foreground">Já finalizadas</p>
           </CardContent>
         </Card>
         <Card>
@@ -119,7 +119,7 @@ export default function Installments() {
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="completed">Concluído</SelectItem>
                 <SelectItem value="overdue">Atrasado</SelectItem>
               </SelectContent>
             </Select>

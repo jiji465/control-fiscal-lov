@@ -22,6 +22,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          "dark-foreground": "hsl(var(--primary-dark-foreground))",
           hover: "hsl(var(--primary-hover))",
         },
         secondary: {
@@ -31,18 +32,22 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+          "dark-foreground": "hsl(var(--destructive-dark-foreground))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          "dark-foreground": "hsl(var(--success-dark-foreground))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+          "dark-foreground": "hsl(var(--warning-dark-foreground))",
         },
         pending: {
           DEFAULT: "hsl(var(--pending))",
           foreground: "hsl(var(--pending-foreground))",
+          "dark-foreground": "hsl(var(--pending-dark-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",

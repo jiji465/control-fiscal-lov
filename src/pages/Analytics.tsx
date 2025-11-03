@@ -17,27 +17,25 @@ export default function Analytics() {
   const { installments } = useInstallments();
   const { clients } = useClients();
 
+  const allItems = [...obligations, ...taxes, ...installments];
+
   // Métricas principais
-  const totalItems = obligations.length + taxes.length;
-  const completed = obligations.filter(o => o.status === 'completed').length + taxes.filter(t => t.status === 'paid').length;
-  const inProgress = obligations.filter(o => o.status === 'in_progress').length;
-  const pending = obligations.filter(o => o.status === 'pending').length + taxes.filter(t => t.status === 'pending').length;
-  const overdue = obligations.filter(o => o.status === 'overdue').length + taxes.filter(t => t.status === 'overdue').length;
+  const totalItems = allItems.length;
+  const completed = allItems.filter(item => item.status === 'completed' || item.status === 'paid').length;
+  const inProgress = allItems.filter(item => item.status === 'in_progress').length;
+  const pending = allItems.filter(item => item.status === 'pending').length;
+  const overdue = allItems.filter(item => item.status === 'overdue').length;
 
   const completedPercent = totalItems > 0 ? Math.round((completed / totalItems) * 100) : 0;
   const onTimePercent = completed > 0 ? Math.round((completed / totalItems) * 100) : 0;
 
   // Dados por cliente
   const clientData = clients.map(client => {
-    const clientObligations = obligations.filter(o => o.client_id === client.id);
-    const clientTaxes = taxes.filter(t => t.client_id === client.id);
-    const total = clientObligations.length + clientTaxes.length;
-    const completedCount = clientObligations.filter(o => o.status === 'completed').length + 
-                          clientTaxes.filter(t => t.status === 'paid').length;
-    const pendingCount = clientObligations.filter(o => o.status === 'pending').length + 
-                        clientTaxes.filter(t => t.status === 'pending').length;
-    const overdueCount = clientObligations.filter(o => o.status === 'overdue').length + 
-                        clientTaxes.filter(t => t.status === 'overdue').length;
+    const clientItems = allItems.filter(item => "client_id" in item && item.client_id === client.id);
+    const total = clientItems.length;
+    const completedCount = clientItems.filter(item => item.status === 'completed' || item.status === 'paid').length;
+    const pendingCount = clientItems.filter(item => item.status === 'pending').length;
+    const overdueCount = clientItems.filter(item => item.status === 'overdue').length;
 
     return {
       name: client.name,

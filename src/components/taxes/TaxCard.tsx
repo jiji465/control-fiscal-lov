@@ -17,10 +17,10 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
   const dueDate = parseISO(tax.due_date);
   const isOverdue = isPast(dueDate) && tax.status === "pending";
 
-  const handleMarkAsPaid = async () => {
+  const handleMarkAsCompleted = async () => {
     await updateTax.mutateAsync({
       id: tax.id,
-      status: "paid",
+      status: "completed",
       paid_at: new Date().toISOString(),
     });
   };
@@ -64,15 +64,6 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {tax.amount && (
-          <div className="text-2xl font-bold text-primary">
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(tax.amount)}
-          </div>
-        )}
-
         <div className="space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Vencimento:</span>
@@ -114,47 +105,49 @@ export function TaxCard({ tax, onEdit }: TaxCardProps) {
           </div>
         )}
 
-        <div className="flex gap-2 pt-2 border-t">
-          {tax.status === "pending" ? (
-            <Button
-              size="sm"
-              variant="default"
-              onClick={handleMarkAsPaid}
-              className="flex-1"
-              disabled={updateTax.isPending}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-1" />
-              Marcar como Pago
-            </Button>
-          ) : (
+        <div>
+          <div className="flex gap-2 pt-2 border-t">
+            {tax.status === "pending" ? (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={handleMarkAsCompleted}
+                className="flex-1"
+                disabled={updateTax.isPending}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                Marcar como Concluído
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleMarkAsPending}
+                className="flex-1"
+                disabled={updateTax.isPending}
+              >
+                Marcar como Pendente
+              </Button>
+            )}
+
             <Button
               size="sm"
               variant="outline"
-              onClick={handleMarkAsPending}
-              className="flex-1"
+              onClick={() => onEdit?.(tax)}
               disabled={updateTax.isPending}
             >
-              Marcar como Pendente
+              <Edit className="h-4 w-4" />
             </Button>
-          )}
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onEdit?.(tax)}
-            disabled={updateTax.isPending}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDelete}
-            disabled={deleteTax.isPending}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDelete}
+              disabled={deleteTax.isPending}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

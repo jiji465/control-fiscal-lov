@@ -22,7 +22,6 @@ const installmentFormSchema = z.object({
   obligation_id: z.string().min(1, "Selecione uma obrigação"),
   installment_number: z.coerce.number().min(1, "Número da parcela deve ser maior que 0"),
   total_installments: z.coerce.number().min(1, "Total de parcelas deve ser maior que 0"),
-  amount: z.coerce.number().min(0.01, "Valor deve ser maior que 0"),
   due_date: z.date({ required_error: "Selecione a data de vencimento" }),
   weekend_handling: z.enum(["advance", "postpone", "next_business_day"]),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
@@ -58,7 +57,6 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
       obligation_id: data.obligation_id,
       installment_number: data.installment_number,
       total_installments: data.total_installments,
-      amount: data.amount,
       due_date: format(adjustedDueDate, "yyyy-MM-dd"),
       weekend_handling: data.weekend_handling,
       status: data.status,
@@ -132,20 +130,6 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor da Parcela *</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" min="0.01" placeholder="1500.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}

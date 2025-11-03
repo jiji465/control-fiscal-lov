@@ -30,7 +30,6 @@ const formSchema = z.object({
   client_id: z.string().min(1, "Cliente é obrigatório"),
   tax_type_name: z.string().min(1, "Tipo de imposto é obrigatório"),
   description: z.string().optional(),
-  amount: z.string().optional(),
   due_date: z.string().min(1, "Data de vencimento é obrigatória"),
   recurrence: z.enum(["none", "monthly", "quarterly", "semiannual", "annual"]),
   responsible: z.string().optional(),
@@ -73,7 +72,6 @@ export function TaxForm({ onSuccess }: TaxFormProps) {
       client_id: values.client_id,
       tax_type_name: values.tax_type_name,
       description: values.description,
-      amount: values.amount ? parseFloat(values.amount) : undefined,
       due_date: adjustedDueDate,
       original_due_date: originalDueDate,
       status: "pending",
@@ -137,25 +135,6 @@ export function TaxForm({ onSuccess }: TaxFormProps) {
               <FormLabel>Descrição</FormLabel>
               <FormControl>
                 <Textarea placeholder="Descrição do imposto" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valor</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...field}
-                />
               </FormControl>
               <FormMessage />
             </FormItem>

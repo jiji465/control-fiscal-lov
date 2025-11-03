@@ -26,7 +26,6 @@ export function ObligationEditForm({ obligation, open, onOpenChange }: Obligatio
   const [taxTypeId, setTaxTypeId] = useState(obligation.tax_type_id || "");
   const [dueDate, setDueDate] = useState(obligation.due_date);
   const [recurrence, setRecurrence] = useState<"none" | "monthly" | "quarterly" | "semiannual" | "annual">(obligation.recurrence);
-  const [amount, setAmount] = useState(obligation.amount?.toString() || "");
   const [notes, setNotes] = useState(obligation.notes || "");
   const [responsible, setResponsible] = useState(obligation.responsible || "");
   const [status, setStatus] = useState<"pending" | "in_progress" | "completed" | "overdue">(obligation.status);
@@ -43,7 +42,6 @@ export function ObligationEditForm({ obligation, open, onOpenChange }: Obligatio
       setTaxTypeId(obligation.tax_type_id || "");
       setDueDate(obligation.due_date);
       setRecurrence(obligation.recurrence);
-      setAmount(obligation.amount?.toString() || "");
       setNotes(obligation.notes || "");
       setResponsible(obligation.responsible || "");
       setStatus(obligation.status);
@@ -62,7 +60,6 @@ export function ObligationEditForm({ obligation, open, onOpenChange }: Obligatio
       due_date: dueDate,
       status,
       recurrence,
-      amount: amount ? parseFloat(amount) : undefined,
       notes: notes || undefined,
       responsible: responsible || undefined,
       completed_at: status === "completed" ? new Date().toISOString() : undefined,
@@ -182,17 +179,6 @@ export function ObligationEditForm({ obligation, open, onOpenChange }: Obligatio
                   <SelectItem value="annual">Anual</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor (R$)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
             </div>
           </div>
 
