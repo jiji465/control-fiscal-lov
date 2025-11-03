@@ -14,6 +14,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WeekendBadge } from "@/components/shared/WeekendBadge";
@@ -367,9 +368,7 @@ export default function Calendar() {
                   {selectedItem.displayTitle}
                 </DialogTitle>
                 <DialogDescription>
-                  {selectedItem.type === 'obligation' && 'Obrigação Fiscal'}
-                  {selectedItem.type === 'tax' && 'Imposto'}
-                  {selectedItem.type === 'installment' && 'Parcelamento'}
+                  Detalhes do item selecionado.
                 </DialogDescription>
               </DialogHeader>
 

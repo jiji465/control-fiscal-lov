@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Deadline } from "@/hooks/useDeadlines";
 import { useInstallments } from "@/hooks/useInstallments";
@@ -50,7 +50,12 @@ export function DeadlineDetails({ deadline, open, onOpenChange }: DeadlineDetail
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
-            <DialogTitle className="text-2xl">{deadline.title}</DialogTitle>
+            <div>
+              <DialogTitle className="text-2xl">{deadline.title}</DialogTitle>
+              <DialogDescription>
+                Detalhes do prazo fiscal
+              </DialogDescription>
+            </div>
             <div className="flex flex-col items-end gap-2">
               <Badge variant={statusConfig[deadline.status].variant}>
                 {statusConfig[deadline.status].label}

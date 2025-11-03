@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,9 @@ export function ClientForm() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Novo Cliente</DialogTitle>
+          <DialogDescription>
+            Preencha os dados para cadastrar um novo cliente.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

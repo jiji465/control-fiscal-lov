@@ -16,6 +16,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -267,6 +268,9 @@ export function InstallmentEditForm({ installment, open, onOpenChange, onSuccess
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Parcela</DialogTitle>
+          <DialogDescription>
+            Atualize as informações da parcela.
+          </DialogDescription>
             <DialogDescription>
               Faça alterações na parcela abaixo
             </DialogDescription>
