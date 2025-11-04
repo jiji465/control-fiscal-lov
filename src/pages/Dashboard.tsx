@@ -44,7 +44,9 @@ export default function Dashboard() {
         <StatsCard
           title="Concluídos"
           value={completedItems}
-          description={`${Math.round((completedItems / totalItems) * 100)}% do total`}
+          description={`${
+            totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0
+          }% do total`}
           icon={CheckCircle}
           variant="success"
         />

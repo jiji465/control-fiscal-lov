@@ -9,7 +9,6 @@ import Dashboard from "./pages/Dashboard";
 import Deadlines from "./pages/Deadlines";
 import Clients from "./pages/Clients";
 import Calendar from "./pages/Calendar";
-import Installments from "./pages/Installments";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
@@ -25,7 +24,6 @@ const App = () => (
           <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
           <Route path="/deadlines" element={<AppLayout><Deadlines /></AppLayout>} />
           <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
-          <Route path="/installments" element={<AppLayout><Installments /></AppLayout>} />
           <Route path="/calendar" element={<AppLayout><Calendar /></AppLayout>} />
           <Route path="/analytics" element={<AppLayout><Analytics /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
