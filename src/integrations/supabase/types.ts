@@ -81,14 +81,17 @@ export type Database = {
         Row: {
           amount: number
           auto_created: boolean | null
+          client_id: string | null
           created_at: string
           due_date: string
           id: string
           installment_number: number
+          name: string | null
           obligation_id: string
           original_due_date: string | null
           paid_at: string | null
           parent_id: string | null
+          protocol: string | null
           status: string
           total_installments: number
           updated_at: string
@@ -97,14 +100,17 @@ export type Database = {
         Insert: {
           amount: number
           auto_created?: boolean | null
+          client_id?: string | null
           created_at?: string
           due_date: string
           id?: string
           installment_number: number
+          name?: string | null
           obligation_id: string
           original_due_date?: string | null
           paid_at?: string | null
           parent_id?: string | null
+          protocol?: string | null
           status?: string
           total_installments: number
           updated_at?: string
@@ -113,20 +119,30 @@ export type Database = {
         Update: {
           amount?: number
           auto_created?: boolean | null
+          client_id?: string | null
           created_at?: string
           due_date?: string
           id?: string
           installment_number?: number
+          name?: string | null
           obligation_id?: string
           original_due_date?: string | null
           paid_at?: string | null
           parent_id?: string | null
+          protocol?: string | null
           status?: string
           total_installments?: number
           updated_at?: string
           weekend_handling?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "installments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "installments_obligation_id_fkey"
             columns: ["obligation_id"]

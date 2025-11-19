@@ -7,23 +7,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useDeadlines } from "@/hooks/useDeadlines";
 import { useInstallments } from "@/hooks/useInstallments";
+import { useClients } from "@/hooks/useClients";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { adjustDueDateForWeekend, WeekendHandling } from "@/lib/weekendUtils";
 
 const installmentFormSchema = z.object({
-  obligation_id: z.string().min(1, "Selecione um prazo"),
+  name: z.string().min(1, "Nome é obrigatório"),
+  protocol: z.string().min(1, "Protocolo é obrigatório"),
+  client_id: z.string().min(1, "Selecione um cliente"),
   installment_number: z.coerce.number().min(1, "Número da parcela deve ser maior que 0"),
   total_installments: z.coerce.number().min(1, "Total de parcelas deve ser maior que 0"),
   due_date: z.date({ required_error: "Selecione a data de vencimento" }),
   weekend_handling: z.enum(["advance", "postpone", "next_business_day"]),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
+  amount: z.coerce.number().min(0, "Valor deve ser maior ou igual a 0").default(0),
 });
 
 type InstallmentFormValues = z.infer<typeof installmentFormSchema>;
@@ -34,8 +37,8 @@ interface InstallmentFormProps {
 }
 
 export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
-  const { deadlines } = useDeadlines();
   const { createInstallment } = useInstallments();
+  const { clients } = useClients();
 
   const form = useForm<InstallmentFormValues>({
     resolver: zodResolver(installmentFormSchema),
@@ -44,6 +47,7 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
       total_installments: 1,
       weekend_handling: "next_business_day",
       status: "pending",
+      amount: 0,
     },
   });
 
@@ -51,12 +55,16 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
     const adjustedDueDate = adjustDueDateForWeekend(data.due_date, data.weekend_handling as WeekendHandling);
     
     await createInstallment.mutateAsync({
-      obligation_id: data.obligation_id,
+      name: data.name,
+      protocol: data.protocol,
+      client_id: data.client_id,
+      obligation_id: "",
       installment_number: data.installment_number,
       total_installments: data.total_installments,
       due_date: format(adjustedDueDate, "yyyy-MM-dd"),
       weekend_handling: data.weekend_handling,
       status: data.status,
+      amount: data.amount,
     } as any);
 
     form.reset();
@@ -67,32 +75,130 @@ export function InstallmentForm({ open, onOpenChange }: InstallmentFormProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Parcela</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Novo Parcelamento</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
-              name="obligation_id"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Prazo *</FormLabel>
+                  <FormLabel>Nome do Parcelamento *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ex: Pagamento de IPTU 2025"
+                      {...field}
+                      className="h-10"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="protocol"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Protocolo *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ex: PROT-2025-001"
+                      {...field}
+                      className="h-10"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="client_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cliente *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um prazo" />
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Selecione um cliente" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {deadlines.map((deadline) => (
-                        <SelectItem key={deadline.id} value={deadline.id}>
-                          {deadline.title}
-                          {deadline.clients && ` - ${deadline.clients.name}`}
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="installment_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número da Parcela *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        {...field}
+                        className="h-10"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="total_installments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total de Parcelas *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="12"
+                        {...field}
+                        className="h-10"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valor da Parcela</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      {...field}
+                      className="h-10"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
