@@ -41,7 +41,7 @@ export function useDeadlines() {
         .order("due_date", { ascending: true });
 
       if (error) throw error;
-      return data as (Deadline & { clients: { id: string; name: string } | null; })[];
+      return data as any as (Deadline & { clients: { id: string; name: string } | null; })[];
     },
   });
 

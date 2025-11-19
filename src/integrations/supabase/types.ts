@@ -154,6 +154,7 @@ export type Database = {
           status: Database["public"]["Enums"]["obligation_status"]
           tax_type_id: string | null
           title: string
+          type: string
           updated_at: string
           user_id: string | null
           weekend_handling: string | null
@@ -175,6 +176,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["obligation_status"]
           tax_type_id?: string | null
           title: string
+          type?: string
           updated_at?: string
           user_id?: string | null
           weekend_handling?: string | null
@@ -196,6 +198,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["obligation_status"]
           tax_type_id?: string | null
           title?: string
+          type?: string
           updated_at?: string
           user_id?: string | null
           weekend_handling?: string | null
