@@ -52,14 +52,29 @@ export function useInstallments(obligationId?: string) {
       const { data, error } = await supabase
         .from("installments")
         .insert([installment])
-        .select()
+        .select(`
+          *,
+          obligations!installments_obligation_id_fkey (
+            id,
+            title,
+            clients (
+              id,
+              name
+            )
+          )
+        `)
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["installments"] });
+    onSuccess: (newData) => {
+      queryClient.setQueryData<any[]>(["installments", obligationId], (oldData) => {
+        if (!oldData) return [newData];
+        return [...oldData, newData].sort((a, b) =>
+            new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+        );
+      });
       toast({ title: "Parcela criada com sucesso!" });
     },
     onError: (error: Error) => {
@@ -77,14 +92,27 @@ export function useInstallments(obligationId?: string) {
         .from("installments")
         .update(updates)
         .eq("id", id)
-        .select()
+        .select(`
+          *,
+          obligations!installments_obligation_id_fkey (
+            id,
+            title,
+            clients (
+              id,
+              name
+            )
+          )
+        `)
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["installments"] });
+    onSuccess: (updatedData) => {
+      queryClient.setQueryData<any[]>(["installments", obligationId], (oldData) => {
+        if (!oldData) return [updatedData];
+        return oldData.map((item) => (item.id === updatedData.id ? updatedData : item));
+      });
       toast({ title: "Parcela atualizada com sucesso!" });
     },
     onError: (error: Error) => {
@@ -100,9 +128,13 @@ export function useInstallments(obligationId?: string) {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("installments").delete().eq("id", id);
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["installments"] });
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<any[]>(["installments", obligationId], (oldData) => {
+        if (!oldData) return [];
+        return oldData.filter((item) => item.id !== deletedId);
+      });
       toast({ title: "Parcela excluída com sucesso!" });
     },
     onError: (error: Error) => {

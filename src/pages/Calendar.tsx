@@ -1,13 +1,10 @@
-
 import React, { useState } from "react";
-import { format, startOfMonth, endOfMonth, isSameMonth, isToday, addMonths, subMonths, getDay, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { format, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Receipt, CreditCard, AlertTriangle } from "lucide-react";
-import { useDeadlines } from "@/hooks/useDeadlines";
-import { useInstallments } from "@/hooks/useInstallments";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +16,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { WeekendBadge } from "@/components/shared/WeekendBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
+import { useCalendarLogic, CalendarItem } from "@/hooks/useCalendarLogic";
 
 const statusColors = {
   pending: "bg-pending/10 text-pending-dark-foreground border-pending/30",
@@ -35,90 +33,24 @@ const typeColors = {
 };
 
 export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [filter, setFilter] = useState<"all" | "obligation" | "tax" | "installments">("all");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const {
+    currentDate,
+    setCurrentDate,
+    filter,
+    setFilter,
+    itemsByDate,
+    calendarWeeks,
+    counts,
+    allItems
+  } = useCalendarLogic();
+
+  const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
   const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
-  const [selectedDayItems, setSelectedDayItems] = useState<any[]>([]);
+  const [selectedDayItems, setSelectedDayItems] = useState<CalendarItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const { deadlines } = useDeadlines();
-  const { installments } = useInstallments();
 
-  const allItems = [
-    ...deadlines,
-    ...installments.map((i: any) => ({ ...i, type: 'installment' })),
-  ];
-
-  const filteredItems = allItems.filter(item => {
-    if (filter === "all") return true;
-    if (filter === "obligation") return item.type === "obligation";
-    if (filter === "tax") return item.type === "tax";
-    if (filter === "installments") return item.type === "installment";
-    return true;
-  });
-
-  const itemsByDate = filteredItems.reduce((acc: any, item: any) => {
-    const dueDate = item.due_date;
-    if (!dueDate) return acc;
-
-    if (!acc[dueDate]) {
-      acc[dueDate] = [];
-    }
-
-    let title = "";
-    let client = null;
-
-    if (item.type === 'installment') {
-      title = `Parcela ${item.installment_number}/${item.total_installments}`;
-      if (item.obligations?.title) title += ` - ${item.obligations.title}`;
-      client = item.obligations?.clients;
-    } else {
-      title = item.title;
-      client = item.clients;
-    }
-
-    acc[dueDate].push({
-      ...item,
-      displayTitle: title,
-      displayClient: client,
-    });
-
-    return acc;
-  }, {});
-
-  const generateCalendarGrid = () => {
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    const startDate = startOfWeek(monthStart, { locale: ptBR });
-    const endDate = endOfWeek(monthEnd, { locale: ptBR });
-
-    const weeks = [];
-    let days = [];
-    let day = startDate;
-
-    while (day <= endDate) {
-      for (let i = 0; i < 7; i++) {
-        days.push(day);
-        day = addDays(day, 1);
-      }
-      weeks.push(days);
-      days = [];
-    }
-    return weeks;
-  };
-
-  const calendarWeeks = generateCalendarGrid();
-
-  // Contadores para legendas
-  const obligationCount = filteredItems.filter(i => i.type === 'obligation').length;
-  const taxCount = filteredItems.filter(i => i.type === 'tax').length;
-  const installmentCount = filteredItems.filter(i => i.type === 'installment').length;
-  const pendingCount = filteredItems.filter(i => i.status === 'pending').length;
-  const completedCount = filteredItems.filter(i => i.status === 'completed' || i.status === 'paid').length;
-  const overdueCount = filteredItems.filter(i => i.status === 'overdue').length;
-
-  const handleDayClick = (day: Date, items: any[]) => {
+  const handleDayClick = (day: Date, items: CalendarItem[]) => {
     if (items.length === 1) {
       setSelectedItem(items[0]);
     } else if (items.length > 1) {
@@ -138,7 +70,7 @@ export default function Calendar() {
     }
     acc[type].push(item);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, CalendarItem[]>);
 
   return (
     <div className="space-y-6 p-6">
@@ -162,17 +94,17 @@ export default function Calendar() {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-[hsl(var(--primary))]" />
                   <span className="text-sm">Obrigações</span>
-                  <Badge variant="secondary" className="ml-1">{obligationCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{counts.obligation}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-[hsl(var(--chart-2))]" />
                   <span className="text-sm">Impostos</span>
-                  <Badge variant="secondary" className="ml-1">{taxCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{counts.tax}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-[hsl(var(--success))]" />
                   <span className="text-sm">Parcelamentos</span>
-                  <Badge variant="secondary" className="ml-1">{installmentCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{counts.installment}</Badge>
                 </div>
               </div>
             </div>
@@ -184,17 +116,17 @@ export default function Calendar() {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-[hsl(var(--warning))]" />
                   <span className="text-sm">Pendente</span>
-                  <Badge variant="secondary" className="ml-1">{pendingCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{counts.pending}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-[hsl(var(--success))]" />
                   <span className="text-sm">Concluído/Pago</span>
-                  <Badge variant="secondary" className="ml-1">{completedCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{counts.completed}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-[hsl(var(--destructive))]" />
                   <span className="text-sm">Atrasado</span>
-                  <Badge variant="secondary" className="ml-1">{overdueCount}</Badge>
+                  <Badge variant="secondary" className="ml-1">{counts.overdue}</Badge>
                 </div>
               </div>
             </div>
@@ -209,7 +141,7 @@ export default function Calendar() {
           size="sm"
           onClick={() => setFilter('all')}
         >
-          Todos ({allItems.length})
+          Todos ({counts.total})
         </Button>
         <Button
           variant={filter === 'obligation' ? 'default' : 'outline'}
@@ -217,7 +149,7 @@ export default function Calendar() {
           onClick={() => setFilter('obligation')}
         >
           <CalendarIcon className="h-4 w-4 mr-2" />
-          Obrigações ({obligationCount})
+          Obrigações ({counts.obligation})
         </Button>
         <Button
           variant={filter === 'tax' ? 'default' : 'outline'}
@@ -225,7 +157,7 @@ export default function Calendar() {
           onClick={() => setFilter('tax')}
         >
           <Receipt className="h-4 w-4 mr-2" />
-          Impostos ({taxCount})
+          Impostos ({counts.tax})
         </Button>
         <Button
           variant={filter === 'installments' ? 'default' : 'outline'}
@@ -233,7 +165,7 @@ export default function Calendar() {
           onClick={() => setFilter('installments')}
         >
           <CreditCard className="h-4 w-4 mr-2" />
-          Parcelamentos ({installmentCount})
+          Parcelamentos ({counts.installment})
         </Button>
       </div>
 
@@ -268,11 +200,12 @@ export default function Calendar() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="grid grid-cols-7 gap-px bg-border">
+          <div className="grid grid-cols-7 gap-px bg-border" role="grid">
             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
               <div
                 key={day}
                 className="bg-muted/50 p-3 text-center text-sm font-medium text-foreground"
+                role="columnheader"
               >
                 {day}
               </div>
@@ -283,71 +216,73 @@ export default function Calendar() {
                 {week.map((day) => {
                   const dayStr = format(day, "yyyy-MM-dd");
                   const items = itemsByDate[dayStr] || [];
-                const isCurrentMonth = isSameMonth(day, currentDate);
-                const isCurrentDay = isToday(day);
-                const dayOfWeek = getDay(day);
-                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+                  const isCurrentDay = isToday(day);
+                  const dayOfWeek = getDay(day);
+                  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-                return (
-                  <div
-                    key={day.toISOString()}
-                    onClick={() => handleDayClick(day, items)}
-                    className={`min-h-[120px] bg-card p-2 transition-all hover:bg-accent/10 cursor-pointer ${
-                      !isCurrentMonth ? "opacity-40" : ""
-                    } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
-                      isWeekend ? "bg-muted/20" : ""
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <span
-                        className={`text-sm ${
-                          isCurrentDay
-                            ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-semibold"
-                            : "font-normal text-foreground"
-                        } ${isWeekend && !isCurrentDay ? "text-muted-foreground" : ""}`}
-                      >
-                        {format(day, "d")}
-                      </span>
-                      {isWeekend && items.length > 0 && (
-                        <AlertTriangle className="h-3 w-3 text-warning" />
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      {items.slice(0, 3).map((item: any) => (
-                        <div
-                          key={item.id}
-                          className={`w-full text-left text-xs p-1.5 rounded border ${
-                            statusColors[item.status as keyof typeof statusColors]
-                          } ${
-                            typeColors[item.type as keyof typeof typeColors]
-                          } truncate hover:shadow-md transition-all`}
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      onClick={() => handleDayClick(day, items)}
+                      className={`min-h-[120px] bg-card p-2 transition-all hover:bg-accent/10 cursor-pointer text-left flex flex-col items-stretch outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        !isCurrentMonth ? "opacity-40" : ""
+                      } ${isCurrentDay ? "ring-2 ring-primary ring-inset" : ""} ${
+                        isWeekend ? "bg-muted/20" : ""
+                      }`}
+                      role="gridcell"
+                      aria-label={`${format(day, "d 'de' MMMM", { locale: ptBR })} - ${items.length} itens`}
+                    >
+                      <div className="flex justify-between items-start mb-2 w-full">
+                        <span
+                          className={`text-sm ${
+                            isCurrentDay
+                              ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-semibold"
+                              : "font-normal text-foreground"
+                          } ${isWeekend && !isCurrentDay ? "text-muted-foreground" : ""}`}
                         >
-                          <div className="font-medium flex items-center gap-1">
-                            {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
-                            {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
-                            {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
-                            {item.displayTitle}
-                          </div>
-                          {item.displayClient && (
-                            <div className="text-xs opacity-75 truncate mt-0.5">
-                              {item.displayClient.name}
+                          {format(day, "d")}
+                        </span>
+                        {isWeekend && items.length > 0 && (
+                          <AlertTriangle className="h-3 w-3 text-warning" />
+                        )}
+                      </div>
+
+                      <div className="space-y-1 w-full">
+                        {items.slice(0, 3).map((item: CalendarItem) => (
+                          <div
+                            key={item.id}
+                            className={`w-full text-left text-xs p-1.5 rounded border ${
+                              statusColors[item.status as keyof typeof statusColors]
+                            } ${
+                              typeColors[item.type as keyof typeof typeColors]
+                            } truncate hover:shadow-md transition-all`}
+                          >
+                            <div className="font-medium flex items-center gap-1">
+                              {item.type === 'obligation' && <CalendarIcon className="h-2.5 w-2.5 inline" />}
+                              {item.type === 'tax' && <Receipt className="h-2.5 w-2.5 inline" />}
+                              {item.type === 'installment' && <CreditCard className="h-2.5 w-2.5 inline" />}
+                              {item.displayTitle}
                             </div>
-                          )}
-                        </div>
-                      ))}
-                      {items.length > 3 && (
-                        <div
-                          key="show-more"
-                          className="w-full text-xs text-muted-foreground text-center font-medium hover:text-foreground transition-colors"
-                        >
-                          +{items.length - 3} mais
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                            {item.displayClient && (
+                              <div className="text-xs opacity-75 truncate mt-0.5">
+                                {item.displayClient.name}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {items.length > 3 && (
+                          <div
+                            key="show-more"
+                            className="w-full text-xs text-muted-foreground text-center font-medium hover:text-foreground transition-colors"
+                          >
+                            +{items.length - 3} mais
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </React.Fragment>
             ))}
           </div>

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +21,8 @@ export interface Deadline {
   updated_at: string;
 }
 
+type DeadlineWithClient = Deadline & { clients: { id: string; name: string } | null };
+
 export function useDeadlines() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -41,7 +42,7 @@ export function useDeadlines() {
         .order("due_date", { ascending: true });
 
       if (error) throw error;
-      return data as any as (Deadline & { clients: { id: string; name: string } | null; })[];
+      return data as unknown as DeadlineWithClient[];
     },
   });
 
@@ -50,14 +51,25 @@ export function useDeadlines() {
       const { data, error } = await supabase
         .from("obligations")
         .insert([deadline])
-        .select()
+        .select(`
+          *,
+          clients (
+            id,
+            name
+          )
+        `)
         .single();
 
       if (error) throw error;
-      return data;
+      return data as unknown as DeadlineWithClient;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+    onSuccess: (newData) => {
+      queryClient.setQueryData<DeadlineWithClient[]>(["deadlines"], (oldData) => {
+        if (!oldData) return [newData];
+        return [...oldData, newData].sort((a, b) =>
+          new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+        );
+      });
       toast({ title: "Prazo criado com sucesso!" });
     },
     onError: (error: Error) => {
@@ -75,14 +87,23 @@ export function useDeadlines() {
         .from("obligations")
         .update(updates)
         .eq("id", id)
-        .select()
+        .select(`
+          *,
+          clients (
+            id,
+            name
+          )
+        `)
         .single();
 
       if (error) throw error;
-      return data;
+      return data as unknown as DeadlineWithClient;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+    onSuccess: (updatedData) => {
+      queryClient.setQueryData<DeadlineWithClient[]>(["deadlines"], (oldData) => {
+        if (!oldData) return [updatedData];
+        return oldData.map((item) => (item.id === updatedData.id ? updatedData : item));
+      });
       toast({ title: "Prazo atualizado com sucesso!" });
     },
     onError: (error: Error) => {
@@ -98,9 +119,13 @@ export function useDeadlines() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("obligations").delete().eq("id", id);
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deadlines"] });
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<DeadlineWithClient[]>(["deadlines"], (oldData) => {
+        if (!oldData) return [];
+        return oldData.filter((item) => item.id !== deletedId);
+      });
       toast({ title: "Prazo excluído com sucesso!" });
     },
     onError: (error: Error) => {
