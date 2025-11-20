@@ -32,6 +32,8 @@ export default function Installments() {
 
   const filteredInstallments = enrichedInstallments.filter((installment) => {
     const matchesSearch = 
+      installment.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      installment.protocol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       installment.deadline?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       installment.deadline?.clients?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || installment.status === statusFilter;
@@ -107,7 +109,7 @@ export default function Installments() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por prazo ou cliente..."
+                placeholder="Buscar por nome, protocolo, título ou cliente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -120,7 +122,7 @@ export default function Installments() {
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="completed">Concluído</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="overdue">Atrasado</SelectItem>
               </SelectContent>
             </Select>

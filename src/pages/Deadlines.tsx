@@ -13,13 +13,15 @@ import {
 import { DeadlineCard } from "@/components/deadlines/DeadlineCard";
 import { DeadlineForm } from "@/components/forms/DeadlineForm";
 import { useDeadlines } from "@/hooks/useDeadlines";
-import { Deadline } from "@/hooks/useDeadlines";
+import { useClients } from "@/hooks/useClients";
 
 export default function Deadlines() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const [typeFilter, setTypeFilter] = useState<"obligation" | "tax" | "all">("all");
+  const [clientFilter, setClientFilter] = useState<string>("all");
   const { deadlines, isLoading } = useDeadlines();
+  const { clients } = useClients();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -32,8 +34,9 @@ export default function Deadlines() {
 
     const matchesStatus = statusFilter === "all" || deadline.status === statusFilter;
     const matchesType = typeFilter === "all" || deadline.type === typeFilter;
+    const matchesClient = clientFilter === "all" || deadline.client_id === clientFilter;
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesClient;
   });
 
   return (
@@ -57,6 +60,19 @@ export default function Deadlines() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1"
         />
+        <Select value={clientFilter} onValueChange={setClientFilter}>
+          <SelectTrigger className="w-full sm:w-[220px]">
+            <SelectValue placeholder="Filtrar por cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os clientes</SelectItem>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
           <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filtrar por status" />
